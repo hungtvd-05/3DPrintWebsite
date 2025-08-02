@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{base::layout(~{::section})}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="Description" content="Enter your description here"/>
+
+    <title>Title</title>
+</head>
+<body>
+<section>
+    <style>
+        .password-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .show-button {
+            position: absolute;
+            right: 10px;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+
+        .table th, td {
+            vertical-align: middle;
+        }
+
+        .avatar-upload-container:hover .upload-overlay {
+            background: rgba(0, 0, 0, 0.9);
+            transform: scale(1.1);
+            transition: all 0.3s ease;
+        }
+
+        .upload-overlay {
+            transition: all 0.3s ease;
+        }
+
+        .upload-overlay:hover {
+            cursor: pointer;
+        }
+
+        /* Address suggestion styles */
+        .address-input-wrapper {
+            position: relative;
+        }
+
+        .address-suggestion-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .address-suggestion-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .address-suggestion-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .address-suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .selected-address-info {
+            margin-top: 8px;
+            padding: 8px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.162.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.162.0/examples/jsm/",
+                "ckeditor5": "https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.js",
+                "ckeditor5/": "https://cdn.ckeditor.com/ckeditor5/43.2.0/"
+            }
+        }
+    </script>
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-xxl-8 offset-xxl-2 ">
+                <h4 class="text-center">My Profile</h4>
+                <th:block th:if="${session.succMsg}">
+                    <p class="text-success fw-bold  text-center">[[${session.succMsg}]]</p>
+                    <th:block th:text="${@commonServiceImpl.removeSessionMessage()}"></th:block>
+                </th:block>
+
+                <th:block th:if="${session.errorMsg}">
+                    <p class="text-danger fw-bold  text-center">[[${session.errorMsg}]]</p>
+                    <th:block th:text="${@commonServiceImpl.removeSessionMessage()}"></th:block>
+                </th:block>
+                <hr>
+                <!-- Thay thế phần avatar và input file cũ -->
+                <div class="col-xl-8 offset-xl-2 mt-2">
+                    <form action="/user/update-profile-1" method="post" enctype="multipart/form-data">
+                        <input type="hidden" th:value="${user.userId}" name="id">
+                        <div class="text-center">
+                            <div class="avatar-upload-container" style="position: relative; display: inline-block;">
+                                <img alt="Avatar" th:src="@{'/img/avatar/'+${user.profileImage}}"
+                                     id="avatar-preview"
+                                     class="border p-2"
+                                     style="width: 110px; height: 110px; border-radius: 50%; object-fit: cover;">
+
+                                <div class="upload-overlay"
+                                     style="position: absolute; bottom: 0; right: 0; background: rgba(0,0,0,0.7); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                                    <i class="ti ti-camera text-white" style="font-size: 14px;"></i>
+                                </div>
+
+                                <input type="file" id="avatar-input" name="img" accept="image/*" style="display: none;">
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">Click vào biểu tượng camera để thay đổi ảnh</small>
+                            </div>
+                        </div>
+                        <table class="table table-borderless">
+
+                            <tbody>
+
+                            <tr>
+                                <th scope="row">Tên</th>
+                                <td>:</td>
+                                <td>
+                                    <input type="text" name="fullName" class="form-control" th:value="${user.fullName}">
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Số điện thoại</th>
+                                <td>:</td>
+                                <td>
+                                    <input type="tel" name="phoneNumber" class="form-control"
+                                           th:value="${user.phoneNumber}">
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Email</th>
+                                <td>:</td>
+                                <td><input type="text" name="" class="form-control"
+                                           readonly th:value="${user.email}"></td>
+                            </tr>
+
+                            </tbody>
+                        </table>
+                        <div class="text-center mb-4">
+                            <button class="btn btn-sm bg-primary text-light">Cập nhật</button>
+                        </div>
+                    </form>
+                    <form action="/user/update-profile-2" method="post" enctype="multipart/form-data">
+                        <input type="hidden" th:value="${user.userId}" name="id">
+                        <table class="table table-borderless">
+
+                            <tbody>
+                            <tr>
+                                <th scope="row">Địa chỉ</th>
+                                <td>:</td>
+                                <td>
+                                    <!-- Address Selection Section - Updated to use input suggestion -->
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="province-input" class="form-label">Tỉnh/Thành phố</label>
+                                            <div class="address-input-wrapper">
+                                                <input type="text"
+                                                       class="form-control"
+                                                       id="province-input"
+                                                       placeholder="Tìm kiếm tỉnh/thành phố..."
+                                                       autocomplete="off" th:value="${user.province}">
+                                                <div id="province-suggestions" class="address-suggestion-list"></div>
+                                                <input type="hidden" id="province-code" name="provinceCode"
+                                                       th:value="${user.provinceCode}">
+                                                <input type="hidden" id="province-name" name="province"
+                                                       th:value="${user.province}">
+                                            </div>
+                                            <div id="selected-province-info" class="selected-address-info"
+                                                 style="display: none;"></div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="ward-input" class="form-label">Phường/Xã</label>
+                                            <div class="address-input-wrapper">
+                                                <input type="text"
+                                                       class="form-control"
+                                                       id="ward-input"
+                                                       placeholder="Tìm kiếm phường/xã..."
+                                                       autocomplete="off"
+                                                       disabled th:value="${user.ward}">
+                                                <div id="ward-suggestions" class="address-suggestion-list"></div>
+                                                <input type="hidden" id="ward-code" name="wardCode"
+                                                       th:value="${user.wardCode}">
+                                                <input type="hidden" id="ward-name" name="ward" th:value="${user.ward}">
+                                                <input type="hidden" id="ward-fullName" name="wardFullName"
+                                                       th:value="${user.wardFullName}">
+                                            </div>
+                                            <div id="selected-ward-info" class="selected-address-info"
+                                                 style="display: none;"></div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <label for="detailAddress" class="form-label">Địa chỉ chi tiết</label>
+                                            <input type="text" class="form-control" id="detailAddress"
+                                                   name="detailAddress"
+                                                   placeholder="Số nhà, tên đường..." th:value="${user.address}">
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th scope="row">About me</th>
+                                <td>:</td>
+                                <td>
+                                    <textarea id="editor" class="form-control" name="aboutMe"
+                                              th:utext="${user.aboutMe}"></textarea>
+                                </td>
+                            </tr>
+
+                            </tbody>
+                        </table>
+                        <div class="text-center mb-4">
+                            <button class="btn btn-sm bg-primary text-light">Cập nhật</button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+
+            <div class="col-xxl-10 offset-xxl-1 mt-1">
+                <h4 class="text-center">Thay đổi mật khẩu</h4>
+                <hr>
+                <div class="col-xl-6 offset-xl-3">
+                    <form action="/user/change-password" method="post">
+                        <table class="table table-borderless">
+                            <tbody>
+                            <tr>
+                                <th scope="row">Mật khẩu hiện tại</th>
+                                <td>
+                                    <div class="password-container">
+                                        <input type="password" id="currentPassword" name="currentPassword"
+                                               class="form-control" placeholder="Nhập mật khẩu hiện tại">
+                                        <button type="button" id="show-button-1" class="show-button">
+                                            <i class="ti ti-eye"></i>
+                                        </button>
+                                    </div>
+                                </td>
+
+                            </tr>
+
+                            <tr>
+                                <th scope="row">Mật khẩu mới</th>
+                                <td>
+                                    <div class="password-container">
+                                        <input class="form-control" name="newPassword" type="password" id="newPassword"
+                                               placeholder="Nhập mật khẩu mới" oninput="validatePassword(this.value)"
+                                               required>
+                                        <button type="button" id="show-button-2" class="show-button">
+                                            <i class="ti ti-eye"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row"></th>
+                                <td>
+                                    <div class="form-group">
+                                        <ul>
+                                            <li id="minLength">
+                                                <i class="fas fa-times text-danger"></i> Tối thiểu 8 kí tự
+                                            </li>
+                                            <li id="uppercase">
+                                                <i class="fas fa-times text-danger"></i> Có ít nhất 1 kí tự viết hoa
+                                            </li>
+                                            <li id="lowercase">
+                                                <i class="fas fa-times text-danger"></i> Có ít nhất 1 kí tự viết thường
+                                            </li>
+                                            <li id="symbol">
+                                                <i class="fas fa-times text-danger"></i> Có ít nhất 1 kí tự đặt biệt
+                                                (@$!%*?&)
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <span id="errorMessage" class="font-weight-bold text-danger"></span>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <th scope="row">Xác nhận mật khẩu</th>
+
+                                <td>
+                                    <div class="password-container">
+                                        <input type="password" id="confirmPassword" name="confirmPassword"
+                                               class="form-control" placeholder="Nhập lại mật khẩu">
+                                        <button type="button" id="show-button-3" class="show-button">
+                                            <i class="ti ti-eye"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+
+
+                            </tbody>
+
+                        </table>
+                        <div class="text-center mb-4">
+                            <button class="btn btn-sm bg-primary text-light" id="submit-button">Cập nhật</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+
+    <script>
+        // Address data storage
+        let addressData = null;
+        let currentProvinceWards = [];
+
+        async function loadAddressData() {
+            try {
+                const response = await fetch('/data/tree.json');
+                const provinces = await response.json();
+
+                provinces.sort((a, b) => Number(a.code) - Number(b.code));
+                addressData = provinces;
+
+                console.log('Address data loaded successfully');
+            } catch (error) {
+                console.error('Error loading address data:', error);
+                showError('Không thể tải dữ liệu địa chỉ');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadAddressData().then(() => {
+                // Kiểm tra an toàn dữ liệu từ Thymeleaf
+                const provinceCode = document.getElementById('province-code').value;
+                const wardCode = document.getElementById('ward-code').value;
+
+                // Chỉ gọi setSelectedAddress nếu có provinceCode
+                if (provinceCode && provinceCode.trim() !== '') {
+                    setSelectedAddress(provinceCode.trim(), wardCode ? wardCode.trim() : '');
+                }
+            }).catch(error => {
+                console.error('Failed to load address data:', error);
+            });
+        });
+
+        // Province suggestion functionality
+        const provinceInput = document.getElementById('province-input');
+        const provinceSuggestions = document.getElementById('province-suggestions');
+        const provinceCodeInput = document.getElementById('province-code');
+        const provinceNameInput = document.getElementById('province-name');
+        const selectedProvinceInfo = document.getElementById('selected-province-info');
+
+        // Ward suggestion functionality
+        const wardInput = document.getElementById('ward-input');
+        const wardSuggestions = document.getElementById('ward-suggestions');
+        const wardCodeInput = document.getElementById('ward-code');
+        const wardNameInput = document.getElementById('ward-name');
+        const wardFullNameInput = document.getElementById('ward-fullName');
+        const selectedWardInfo = document.getElementById('selected-ward-info');
+
+        // Province input events
+        provinceInput.addEventListener('input', function () {
+            const value = this.value.trim().toLowerCase();
+            if (!value) {
+                hideProvinceSuggestions();
+                resetWardSelection();
+                return;
+            }
+            updateProvinceSuggestions(value);
+        });
+
+        provinceInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                hideProvinceSuggestions();
+            }
+        });
+
+        // Ward input events
+        wardInput.addEventListener('input', function () {
+            const value = this.value.trim().toLowerCase();
+            if (!value) {
+                hideWardSuggestions();
+                return;
+            }
+            updateWardSuggestions(value);
+        });
+
+        wardInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                hideWardSuggestions();
+            }
+        });
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('#province-input') && !e.target.closest('#province-suggestions')) {
+                hideProvinceSuggestions();
+            }
+            if (!e.target.closest('#ward-input') && !e.target.closest('#ward-suggestions')) {
+                hideWardSuggestions();
+            }
+        });
+
+        function updateProvinceSuggestions(value) {
+            if (!addressData) return;
+
+            const matches = addressData.filter(province =>
+                province.name.toLowerCase().includes(value) ||
+                province.fullName.toLowerCase().includes(value)
+            );
+
+            if (matches.length > 0) {
+                showProvinceSuggestions(matches, value);
+            } else {
+                hideProvinceSuggestions();
+            }
+        }
+
+        function showProvinceSuggestions(matches, inputValue) {
+            provinceSuggestions.innerHTML = '';
+
+            matches.forEach(province => {
+                const div = document.createElement('div');
+                div.className = 'address-suggestion-item';
+
+                // Highlight matching text
+                const matchIndex = province.name.toLowerCase().indexOf(inputValue.toLowerCase());
+                let displayText = province.name;
+                if (matchIndex !== -1) {
+                    const beforeMatch = province.name.slice(0, matchIndex);
+                    const match = province.name.slice(matchIndex, matchIndex + inputValue.length);
+                    const afterMatch = province.name.slice(matchIndex + inputValue.length);
+                    displayText = `${beforeMatch}<strong>${match}</strong>${afterMatch}`;
+                }
+
+                div.innerHTML = displayText;
+                div.addEventListener('click', () => selectProvince(province));
+                provinceSuggestions.appendChild(div);
+            });
+
+            provinceSuggestions.style.display = 'block';
+        }
+
+        function hideProvinceSuggestions() {
+            provinceSuggestions.style.display = 'none';
+        }
+
+        function selectProvince(province) {
+            provinceInput.value = province.name;
+            provinceCodeInput.value = province.code;
+            provinceNameInput.value = province.name;
+
+            selectedProvinceInfo.innerHTML = `<strong>Đã chọn:</strong> ${province.fullName}`;
+            selectedProvinceInfo.style.display = 'block';
+
+            hideProvinceSuggestions();
+
+            // Debug: Kiểm tra cấu trúc province object
+            console.log('Selected province:', province);
+            console.log('Province wards:', province.wards);
+
+            // Load wards for selected province
+            loadWardsForProvince(province);
+
+            // Enable ward input
+            wardInput.disabled = false;
+            wardInput.placeholder = 'Tìm kiếm phường/xã...';
+        }
+
+        function loadWardsForProvince(province) {
+            console.log('loadWardsForProvince called with:', province);
+
+            // Kiểm tra các tên thuộc tính khác nhau có thể có trong dữ liệu
+            const rawWards = province.wards || province.districts || province.children || [];
+            console.log('Raw wards data:', rawWards);
+
+            if (rawWards.length > 0) {
+                rawWards.sort((a, b) => Number(a.code) - Number(b.code));
+                console.log('Sorted wards:', rawWards);
+
+                // Gán sau khi sort
+                currentProvinceWards = rawWards;
+            } else {
+                console.log('No wards found for province:', province.name);
+                currentProvinceWards = [];
+            }
+
+            // Reset ward selection NHƯNG KHÔNG reset currentProvinceWards
+            wardInput.value = '';
+            wardInput.disabled = false; // Enable ngay lập tức
+            wardInput.placeholder = 'Tìm kiếm phường/xã...';
+            wardCodeInput.value = '';
+            wardNameInput.value = '';
+            wardFullNameInput.value = '';
+            selectedWardInfo.style.display = 'none';
+            hideWardSuggestions();
+        }
+
+        function resetWardSelection() {
+            wardInput.value = '';
+            wardInput.disabled = true;
+            wardInput.placeholder = 'Chọn tỉnh/thành phố trước';
+            wardCodeInput.value = '';
+            wardNameInput.value = '';
+            wardFullNameInput.value = '';
+            selectedWardInfo.style.display = 'none';
+            hideWardSuggestions();
+        }
+
+        function updateWardSuggestions(value) {
+            console.log('updateWardSuggestions called with:', value);
+            console.log('currentProvinceWards length:', currentProvinceWards.length);
+
+            if (currentProvinceWards.length === 0) {
+                console.log('No wards available');
+                return;
+            }
+
+            const matches = currentProvinceWards.filter(ward =>
+                ward.name.toLowerCase().includes(value) ||
+                ward.fullName.toLowerCase().includes(value)
+            );
+
+            console.log('Found matches:', matches.length);
+
+            if (matches.length > 0) {
+                showWardSuggestions(matches, value);
+            } else {
+                hideWardSuggestions();
+            }
+        }
+
+        function showWardSuggestions(matches, inputValue) {
+            console.log('showWardSuggestions called with matches:', matches.length);
+
+            wardSuggestions.innerHTML = '';
+
+            matches.forEach(ward => {
+                const div = document.createElement('div');
+                div.className = 'address-suggestion-item';
+
+                // Highlight matching text
+                const matchIndex = ward.name.toLowerCase().indexOf(inputValue.toLowerCase());
+                let displayText = ward.name;
+                if (matchIndex !== -1) {
+                    const beforeMatch = ward.name.slice(0, matchIndex);
+                    const match = ward.name.slice(matchIndex, matchIndex + inputValue.length);
+                    const afterMatch = ward.name.slice(matchIndex + inputValue.length);
+                    displayText = `${beforeMatch}<strong>${match}</strong>${afterMatch}`;
+                }
+
+                div.innerHTML = `${displayText}`;
+                div.addEventListener('click', () => selectWard(ward));
+                wardSuggestions.appendChild(div);
+            });
+
+            wardSuggestions.style.display = 'block';
+            console.log('Ward suggestions displayed');
+        }
+
+        function hideWardSuggestions() {
+            wardSuggestions.style.display = 'none';
+        }
+
+        function selectWard(ward) {
+            wardInput.value = ward.name;
+            wardCodeInput.value = ward.code;
+            wardNameInput.value = ward.name;
+            wardFullNameInput.value = ward.fullName;
+
+            selectedWardInfo.innerHTML = `<strong>Đã chọn:</strong> ${ward.fullName}`;
+            selectedWardInfo.style.display = 'block';
+
+            hideWardSuggestions();
+        }
+
+        function showError(message) {
+            console.error(message);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            loadAddressData();
+        });
+
+        // Function to set selected address (for pre-filling form)
+        function setSelectedAddress(provinceCode, wardCode) {
+            if (!addressData) {
+                setTimeout(() => setSelectedAddress(provinceCode, wardCode), 100);
+                return;
+            }
+
+            if (provinceCode) {
+                const province = addressData.find(p => p.code === provinceCode);
+                if (province) {
+                    selectProvince(province);
+
+                    if (wardCode) {
+
+                        console.log("Setting ward code:", wardCode);
+                        console.log(currentProvinceWards);
+
+                        setTimeout(() => {
+                            const ward = currentProvinceWards.find(w => w.code === wardCode);
+
+                            if (ward) {
+                                console.log("Setting ward:", ward);
+                                selectWard(ward);
+                            }
+                        }, 50);
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script>
+        // Existing avatar upload script
+        document.addEventListener('DOMContentLoaded', function () {
+            const uploadOverlay = document.querySelector('.upload-overlay');
+            const avatarInput = document.getElementById('avatar-input');
+            const avatarPreview = document.getElementById('avatar-preview');
+
+            uploadOverlay.addEventListener('click', function () {
+                avatarInput.click();
+            });
+
+            avatarInput.addEventListener('change', function (event) {
+                const file = event.target.files[0];
+
+                if (file) {
+                    if (!file.type.startsWith('image/')) {
+                        alert('Vui lòng chọn file ảnh!');
+                        return;
+                    }
+
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('Kích thước ảnh không được vượt quá 5MB!');
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        avatarPreview.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            const avatarContainer = document.querySelector('.avatar-upload-container');
+
+            avatarContainer.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                this.style.opacity = '0.7';
+            });
+
+            avatarContainer.addEventListener('dragleave', function (e) {
+                e.preventDefault();
+                this.style.opacity = '1';
+            });
+
+            avatarContainer.addEventListener('drop', function (e) {
+                e.preventDefault();
+                this.style.opacity = '1';
+
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    avatarInput.files = files;
+                    avatarInput.dispatchEvent(new Event('change'));
+                }
+            });
+        });
+
+        // Existing password show/hide scripts
+        document.getElementById('show-button-1').addEventListener('click',
+            function () {
+                const passwordInput = document.getElementById('currentPassword');
+                const icon = this.querySelector('i');
+
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.remove('ti-eye');
+                    icon.classList.add('ti-eye-off');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.remove('ti-eye-off');
+                    icon.classList.add('ti-eye');
+                }
+            });
+
+        document.getElementById('show-button-2').addEventListener('click',
+            function () {
+                const passwordInput = document.getElementById('newPassword');
+                const icon = this.querySelector('i');
+
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.remove('ti-eye');
+                    icon.classList.add('ti-eye-off');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.remove('ti-eye-off');
+                    icon.classList.add('ti-eye');
+                }
+            });
+
+        document.getElementById('show-button-3').addEventListener('click',
+            function () {
+                const passwordInput = document.getElementById('confirmPassword');
+                const icon = this.querySelector('i');
+
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.remove('ti-eye');
+                    icon.classList.add('ti-eye-off');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.remove('ti-eye-off');
+                    icon.classList.add('ti-eye');
+                }
+            });
+    </script>
+
+    <script>
+        // Existing password validation scripts
+        document.getElementById('submit-button').addEventListener('click',
+            function () {
+                const passwordInput = document.getElementById('newPassword');
+                const icon = this.querySelector('i');
+
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+
+        function validatePassword(password) {
+            const strongPasswordRegex =
+                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>\-_])[A-Za-z\d!@#$%^&*(),.?":{}|<>\-_]{8,}$/;
+            const errorMessage = document.getElementById('errorMessage');
+
+            document.getElementById('minLength').innerHTML =
+                password.length >= 8 ?
+                    '<i class="fas fa-check text-success"></i> Tối thiểu 8 kí tự' :
+                    '<i class="fas fa-times text-danger"></i> Tối thiểu 8 kí tự';
+            document.getElementById('uppercase').innerHTML =
+                /[A-Z]/.test(password) ?
+                    '<i class="fas fa-check text-success"></i> Có ít nhất 1 kí tự viết hoa' :
+                    '<i class="fas fa-times text-danger"></i> Có ít nhất 1 kí tự viết hoa';
+            document.getElementById('lowercase').innerHTML =
+                /[a-z]/.test(password) ?
+                    '<i class="fas fa-check text-success"></i> Có ít nhất 1 kí tự viết thường' :
+                    '<i class="fas fa-times text-danger"></i> Có ít nhất 1 kí tự viết thường';
+            document.getElementById('symbol').innerHTML =
+                /[!@#$%^&*(),.?":{}|<>\-_]/.test(password) ?
+                    '<i class="fas fa-check text-success"></i> Có ít nhất 1 kí tự đặt biệt (@$!%*?&)' :
+                    '<i class="fas fa-times text-danger"></i> Có ít nhất 1 kí tự đặt biệt (@$!%*?&)';
+
+            if (strongPasswordRegex.test(password)) {
+                errorMessage.textContent = 'Mật khẩu mạnh';
+                errorMessage.classList.remove('text-danger');
+                errorMessage.classList.add('text-success');
+                return true;
+            } else {
+                errorMessage.textContent = 'Mật khẩu yếu';
+                errorMessage.classList.remove('text-success');
+                errorMessage.classList.add('text-danger');
+                return false;
+            }
+        }
+
+        document.getElementById('submit-button').addEventListener('click', function (event) {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const password = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!validatePassword(password)) {
+                event.preventDefault();
+                alert('Mật khẩu của bạn không đủ mạnh. Vui lòng kiểm tra lại các yêu cầu.');
+            }
+
+            if (currentPassword === password && validatePassword(password)) {
+                event.preventDefault();
+                alert('Mật khẩu cũ và mật khẩu mới không được giống nhau. Vui lòng kiểm tra lại.');
+            }
+
+            if (password !== confirmPassword && validatePassword(password)) {
+                event.preventDefault();
+                alert('Mật khẩu và mật khẩu xác nhận không khớp. Vui lòng kiểm tra lại.');
+            }
+        });
+    </script>
+    <script type="importmap">
+        {
+            "imports": {
+                "ckeditor5": "https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.js",
+                "ckeditor5/": "https://cdn.ckeditor.com/ckeditor5/43.2.0/"
+            }
+        }
+    </script>
+    <script type="module" th:src="@{/js/ckeditor.js}"></script>
+</section>
+</body>
+</html>

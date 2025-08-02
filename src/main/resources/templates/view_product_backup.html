@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{base::layout(~{::section})}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="Description" content="Enter your description here"/>
+
+    <title>Title</title>
+</head>
+<body>
+<section>
+    <style>
+
+        a {
+            color: #2b52fe;
+        }
+
+        .con {
+            max-width: 1080px;
+            padding: 20px;
+            background-color: White;
+            margin: 0 auto;
+            border-radius: 16px;
+        }
+
+        .carousel-container {
+            display: flex;
+            max-width: 1080px;
+            /*padding: 20px;*/
+            margin: 0 auto;
+            gap: 20px;
+            /*background-color: White;*/
+        }
+
+        .back-button {
+            /*transform: translateY(-50%);*/
+            background: rgba(0, 0, 0, 0);
+            color: rgba(0, 0, 0, 0.5);
+            border: none;
+            width: 40px; /* Fixed size for circular buttons */
+            height: 40px; /* Fixed size for circular buttons */
+            border-radius: 50%; /* Make buttons circular */
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .back-button:hover {
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+        }
+
+        /*.avatar {*/
+        /*    width: 50px;*/
+        /*    height: 50px;*/
+        /*}*/
+
+        .info {
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Space between back button and avatar */
+            margin-bottom: 20px; /* Space below the info section */
+        }
+
+        .avatar img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%; /* Make avatar circular */
+        }
+
+        .info-text p {
+            margin: 0;
+            font-size: 12px;
+        }
+
+        .main-image {
+            flex: 2;
+            max-height: 500px; /* Optional: limit max height */
+            position: relative; /* For positioning navigation buttons */
+            background-color: #F6F7FA;
+            border-radius: 16px;
+        }
+
+        .main-image img {
+            width: 100%;
+            height: auto; /* Allow image to scale responsively */
+            object-fit: contain;
+            border-radius: 16px;
+            max-height: 500px;
+        }
+
+        .thumbnail-list {
+            overflow-y: scroll; /* Vertical scrollbar by default */
+            overflow-x: hidden; /* Prevent horizontal scrollbar */
+            padding: 0 5px; /* Align with image width */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .thumbnail-list img {
+            width: 160px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .thumbnail-list img:hover {
+            opacity: 0.8;
+        }
+
+        .thumbnail-list img.active {
+            border: 2px solid #007bff;
+            opacity: 1;
+        }
+
+        /* Custom vertical scrollbar */
+        .thumbnail-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .thumbnail-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .thumbnail-list::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .thumbnail-list::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Navigation buttons */
+        .nav-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 40px; /* Fixed size for circular buttons */
+            height: 40px; /* Fixed size for circular buttons */
+            border-radius: 50%; /* Make buttons circular */
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .nav-button:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .prev-button {
+            left: 10px;
+        }
+
+        .next-button {
+            right: 10px;
+        }
+
+        .download-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 40px; /* Match nav-button size */
+            height: 40px; /* Match nav-button size */
+            border-radius: 50%; /* Make button circular */
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .download-button:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .zoom-button {
+            position: absolute;
+            top: 10px;
+            right: 60px; /* Position to the left of download button */
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 40px; /* Match nav-button size */
+            height: 40px; /* Match nav-button size */
+            border-radius: 50%; /* Make button circular */
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .zoom-button:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8); /* Semi-transparent background */
+            /*z-index: 1000;*/
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .modal-close:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .modal-nav-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .modal-nav-button:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .modal-prev-button {
+            left: 20px;
+        }
+
+        .modal-next-button {
+            right: 20px;
+        }
+
+        .modal-download-button {
+            position: absolute;
+            top: 20px;
+            right: 70px; /* To the left of close button */
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .modal-download-button:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        /* Media query for screens smaller than 500px */
+        @media (max-width: 500px) {
+            .carousel-container {
+                flex-direction: column; /* Stack main image and thumbnails vertically */
+                gap: 5px;
+            }
+
+            .main-image {
+                flex: 0; /* Remove flex grow */
+                width: 100%; /* Full width for main image */
+            }
+
+            .main-image img {
+                width: 100%;
+                max-height: 260px;
+            }
+
+            .thumbnail-list {
+                flex: 0;
+                width: 100%; /* Full width for thumbnail list */
+                height: 140px; /* Fixed height for horizontal thumbnails */
+                overflow-y: hidden; /* Disable vertical scrollbar */
+                overflow-x: scroll; /* Enable horizontal scrollbar */
+                flex-direction: row; /* Arrange thumbnails horizontally */
+                padding: 5px 0;
+                white-space: nowrap; /* Prevent wrapping */
+            }
+
+            .thumbnail-list img {
+                width: 120px; /* Smaller width for thumbnails */
+                height: 90px; /* Adjust height proportionally */
+                display: inline-block; /* Ensure horizontal alignment */
+            }
+
+            /* Custom horizontal scrollbar */
+            .thumbnail-list::-webkit-scrollbar {
+                height: 8px; /* Horizontal scrollbar height */
+            }
+
+            /* Adjust navigation buttons for smaller screens */
+            .nav-button {
+                width: 32px; /* Smaller size for smaller screens */
+                height: 32px;
+                font-size: 16px;
+            }
+
+            /*.tag-group {*/
+            /*    !*display: flex;*!*/
+            /*    flex-wrap: wrap;*/
+            /*    gap: 5px; !* Space between tags *!*/
+            /*    margin-top: 10px; !* Space above tag group *!*/
+            /*}*/
+
+        }
+
+        .tag-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px; /* Space between tags */
+            /*margin-top: 10px; !* Space above tag group *!*/
+        }
+
+        .tag-group .tag {
+            padding: 5px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .tag-group .tag:hover {
+            background-color: #007bff; /* Change background color on hover */
+            color: white; /* Change text color on hover */
+            text-decoration: none; /* Remove underline on hover */
+        }
+
+        .description img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .product-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+            font-family: Arial, sans-serif;
+            aspect-ratio: 1 / 1;
+            position: relative; /* For positioning buttons */
+        }
+
+        .product-image {
+            height: calc(100% - 35.5px);
+            background-color: #f0f0f0;
+            position: relative;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-info {
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-title {
+            margin: 0;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 13px;
+            color: #5A6A85;
+        }
+
+        .avatar-button {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 40px;
+            height: 40px;
+            border: 2px solid white;
+            border-radius: 50%;
+            overflow: hidden;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .avatar-button img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-button:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .product-card:hover img {
+            filter: brightness(80%);
+        }
+
+        .favorite-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .favorite-button:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .action-button {
+            color: #007bff;
+            border: none;
+            background: none;
+            font-size: 32px;
+        }
+
+        .ti-heart-filled {
+            color: #007bff;
+        }
+
+        .comment-container {
+            max-width: 600px;
+            margin: 20px auto;
+            /*margin-bottom: 0;*/
+            font-family: Arial, sans-serif;
+            position: relative; /* For positioning send button */
+        }
+
+        .comment-input {
+            width: 100%;
+            padding: 10px 50px 10px 15px; /* Extra padding-right for send button */
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            box-sizing: border-box;
+        }
+
+        .comment-input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+        }
+
+        .comment-input::placeholder {
+            color: #999;
+        }
+
+        .send-button {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .send-button:hover {
+            background: #0056b3;
+        }
+
+        .send-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+    <div style="background-color: #F6F7FA; padding: 16px" class="pt-3">
+        <div class="con mb-3">
+            <div class="info">
+                <button onclick="history.back()" class="back-button"><i class="ti ti-chevron-left"></i></button>
+                <div class="avatar">
+                    <img th:src="@{'/img/avatar/' + ${product.getCreatedBy().getProfileImage().isEmpty()?product.getCreatedBy().getProfileImage():'user.png'}}" alt="Product Avatar" class="avatar-img">
+                </div>
+                <div class="info-text">
+                    <h5 th:text="${product.getName()}">User Name</h5>
+                    <p th:text="${product.getInfo()}">User Name</p>
+                </div>
+            </div>
+            <div class="container-style">
+                <div class="carousel-container">
+                    <div class="main-image">
+                        <button class="nav-button prev-button" id="prevButton"><i class="ti ti-arrow-left"></i></button>
+                        <img th:src="@{'/product/img/' + ${product.getImageFiles().get(0)}}" alt="Main Product Image" id="mainImage">
+                        <button class="nav-button next-button" id="nextButton"><i class="ti ti-arrow-right"></i></button>
+                        <button class="zoom-button" id="zoomButton" title="Zoom Image"><i class="ti ti-resize"></i></button>
+                        <button class="download-button" id="downloadButton" title="Download Image"><i class="ti ti-photo-down"></i></button>
+                    </div>
+                    <div class="thumbnail-list" id="thumbnailList">
+                        <img th:src="@{'/product/img/' + ${img.getValue()}}" th:alt="${'Thumbnail ' + img.getKey()}" class="active" th:each="img, i:${product.getImageFiles()}">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="con">
+            <div class="row text-center">
+                <div class="col ">
+                    <a class="action-button" th:href="@{/product:{id}(id=${product.id})}" title="View Product Details">
+                        <i th:class="${(view.isEmpty()) ? 'ti ti-info-circle-filled' : 'ti ti-info-circle'}"></i>
+                    </a>
+                </div>
+                <div class="col">
+                    <a class="action-button" th:href="@{/product:{id}/files(id=${product.id})}" title="View Files">
+                        <i th:class="${(view == 'files') ? 'ti ti-file-filled' : 'ti ti-file'}"></i>
+                    </a>
+                </div>
+                <div class="col">
+                    <a class="action-button" th:href="@{/product:{id}/comments(id=${product.id})}" title="View Comments">
+                        <i th:class="${(view == 'comments') ? 'ti ti-message-filled' : 'ti ti-message'}"></i>
+                    </a>
+                </div>
+                <div class="col">
+                    <button class="action-button favorite-main-button" th:data-id="${product.id}" title="Add to Favorites">
+                        <i th:class="${(user != null && user.getFavoriteProducts().contains(product.id)) ? 'ti ti-heart-filled' : 'ti ti-heart'}"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="con px-md-5 mt-3">
+            <th:block th:if="${view.isEmpty()}">
+                <div th:if="${!product.getDescription().isEmpty()}" class="description">
+                    <p th:utext="${product.getDescription()}"></p>
+                </div>
+                <h4><strong>Tag</strong></h4>
+                <div class="tag-group">
+                    <a th:href="@{'/tag:' + ${tag.getName()}}" class="tag" th:each="tag : ${product.getTags()}">
+                        <span th:text="${tag.name}">Tag Name</span>
+                    </a>
+                </div>
+            </th:block>
+            <th:block th:if="${view == 'files'}">
+
+            </th:block>
+            <th:block th:if="${view == 'comments'}">
+                <div class="comment-container">
+                    <input type="text" class="comment-input" id="commentInput" placeholder="Write your comment..." maxlength="500">
+                    <button class="send-button" id="sendButton" title="Send Comment"><i class="ti ti-corner-right-up"></i></button>
+                </div>
+            </th:block>
+        </div>
+        <th:block th:if="${!moreProducts.isEmpty()}">
+            <div class="con mt-3">
+                <div class="row">
+                    <a th:href="@{/product:{id}(id=${pro.id})}" class="col-xl-3 col-lg-4 col-6 mb-3" th:each="pro, p:${moreProducts}">
+                        <div class="product-card">
+                            <div class="product-image">
+                                <img th:src="@{'/product/img/' + ${pro.getImageFiles()[0]}}" alt="Product Image">
+                            </div>
+                            <div class="avatar-button" th:data-id="${pro.id}" title="View Profile">
+                                <img th:src="@{'/img/avatar/' + ${pro.getCreatedBy().getProfileImage().isEmpty() ? pro.getCreatedBy().getProfileImage(): 'user.png'}}" alt="Avatar">
+                            </div>
+                            <button class="favorite-button" th:data-id="${pro.id}" title="Add to Favorites">
+                                <i th:class="${(user != null && user.getFavoriteProducts().contains(pro.id)) ? 'ti ti-heart-filled' : 'ti ti-heart'}"></i>
+                            </button>
+                            <div class="product-info">
+                                <p class="product-title" th:utext="${pro.getName()}"></p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </th:block>
+
+        <div class="modal" id="imageModal">
+            <button class="modal-nav-button modal-prev-button" id="modalPrevButton"><i class="ti ti-arrow-left"></i></button>
+            <img id="modalImage" src="" alt="Zoomed Image">
+            <button class="modal-nav-button modal-next-button" id="modalNextButton"><i class="ti ti-arrow-right"></i></button>
+            <button class="modal-download-button" id="modalDownloadButton" title="Download Image"><i class="ti ti-photo-down"></i></button>
+            <button class="modal-close" id="modalClose"><i class="ti ti-x"></i></button>
+        </div>
+    </div>
+    <script>
+        const mainImage = document.getElementById('mainImage');
+        const thumbnailList = document.getElementById('thumbnailList');
+        const thumbnails = document.querySelectorAll('.thumbnail-list img');
+        const prevButton = document.getElementById('prevButton');
+        const nextButton = document.getElementById('nextButton');
+        const downloadButton = document.getElementById('downloadButton');
+        const zoomButton = document.getElementById('zoomButton');
+        const imageModal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        const modalClose = document.getElementById('modalClose');
+        const modalPrevButton = document.getElementById('modalPrevButton');
+        const modalNextButton = document.getElementById('modalNextButton');
+        const modalDownloadButton = document.getElementById('modalDownloadButton');
+
+
+        // Function to sync thumbnail list height with main image for larger screens
+        function syncThumbnailListHeight() {
+            if (window.innerWidth > 500) {
+                const mainImageHeight = mainImage.getBoundingClientRect().height;
+                thumbnailList.style.height = `${mainImageHeight}px`;
+            } else {
+                thumbnailList.style.height = '140px'; // Fixed height for horizontal layout
+            }
+        }
+
+        // Function to scroll thumbnail into view
+        function scrollThumbnailIntoView(index) {
+            const thumbnail = thumbnails[index];
+            if (window.innerWidth > 500) {
+                // Vertical layout: scroll vertically
+                const thumbnailTop = thumbnail.offsetTop;
+                const thumbnailHeight = thumbnail.offsetHeight;
+                const containerHeight = thumbnailList.clientHeight;
+                const scrollPosition = thumbnailTop - (containerHeight - thumbnailHeight) / 2;
+                thumbnailList.scrollTo({ top: scrollPosition, behavior: 'smooth' });
+            } else {
+                // Horizontal layout: scroll horizontally
+                const thumbnailLeft = thumbnail.offsetLeft;
+                const thumbnailWidth = thumbnail.offsetWidth;
+                const containerWidth = thumbnailList.clientWidth;
+                const scrollPosition = thumbnailLeft - (containerWidth - thumbnailWidth) / 2;
+                thumbnailList.scrollTo({ left: scrollPosition, behavior: 'smooth' });
+            }
+        }
+
+        // Function to handle image download
+        function downloadImage() {
+            const imageSrc = mainImage.src;
+            const link = document.createElement('a');
+            link.href = imageSrc;
+            link.download = mainImage.alt || 'product-image'; // Use alt text as filename or default
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Function to handle image zoom (open modal)
+        function zoomImage() {
+            modalImage.src = mainImage.src;
+            modalImage.alt = mainImage.alt;
+            imageModal.style.display = 'flex';
+        }
+
+        // Function to close modal
+        function closeModal() {
+            imageModal.style.display = 'none';
+        }
+
+        // Handle navigation buttons in modal
+        let currentIndex = 0;
+
+        function updateImage(index) {
+            if (index >= 0 && index < thumbnails.length) {
+                thumbnails.forEach(thumb => thumb.classList.remove('active'));
+                thumbnails[index].classList.add('active');
+                mainImage.src = thumbnails[index].src;
+                mainImage.alt = thumbnails[index].alt;
+                modalImage.src = thumbnails[index].src;
+                modalImage.alt = thumbnails[index].alt;
+                currentIndex = index;
+                scrollThumbnailIntoView(index); // Scroll to the selected thumbnail
+                mainImage.addEventListener('load', syncThumbnailListHeight, { once: true });
+            }
+        }
+
+        // Run on image load
+        mainImage.addEventListener('load', syncThumbnailListHeight);
+
+        // Run on window resize for responsiveness
+        window.addEventListener('resize', syncThumbnailListHeight);
+
+        // Initial sync after DOM is loaded
+        document.addEventListener('DOMContentLoaded', syncThumbnailListHeight);
+
+        // Handle thumbnail clicks
+        thumbnails.forEach((thumbnail, index) => {
+            thumbnail.addEventListener('click', () => {
+                updateImage(index);
+            });
+        });
+
+        // Handle main navigation buttons
+        prevButton.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                updateImage(currentIndex - 1);
+            }
+        });
+
+        nextButton.addEventListener('click', () => {
+            if (currentIndex < thumbnails.length - 1) {
+                updateImage(currentIndex + 1);
+            }
+        });
+
+        // Handle modal navigation buttons
+        modalPrevButton.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                updateImage(currentIndex - 1);
+            }
+        });
+
+        modalNextButton.addEventListener('click', () => {
+            if (currentIndex < thumbnails.length - 1) {
+                updateImage(currentIndex + 1);
+            }
+        });
+
+        // Handle download button (main and modal)
+        downloadButton.addEventListener('click', downloadImage);
+        modalDownloadButton.addEventListener('click', downloadImage);
+
+        // Handle zoom button
+        zoomButton.addEventListener('click', zoomImage);
+
+        // Handle modal close
+        modalClose.addEventListener('click', closeModal);
+
+        document.querySelectorAll('.favorite-main-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault(); // Prevent default link behavior
+
+                const productId = button.getAttribute('data-id');
+                button.disabled = true; // Disable button while request is in progress
+
+                $.ajax({
+                    url: `/api/favorite?productId=${productId}`,
+                    method: 'GET',
+                    success: function (response) {
+                        if (response === 'added') {
+                            button.querySelector('i').classList.remove('ti-heart');
+                            button.querySelector('i').classList.add('ti-heart-filled');
+                            $("#error-message").hide();
+                        } else if (response === 'removed') {
+                            button.querySelector('i').classList.remove('ti-heart-filled');
+                            button.querySelector('i').classList.add('ti-heart');
+                            $("#error-message").hide();
+                        } else if (response === 'User not found') {
+                            alert("Vui lòng đăng nhập để thêm sản phẩm yêu thích.");
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error adding/removing favorite:', error);
+                        $("#error-message").show().text('Có lỗi xảy ra khi thực hiện yêu thích sản phẩm. Vui lòng thử lại.');
+                    },
+                    complete: function () {
+                        button.disabled = false; // Re-enable button after request completes
+                    }
+                });
+            });
+        })
+
+        document.querySelectorAll('.favorite-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault(); // Ngăn chặn hành vi mặc định của link
+
+                const productId = button.getAttribute('data-id');
+                button.disabled = true; // Vô hiệu hóa nút trong khi gửi yêu cầu
+
+                $.ajax({
+                    url: `/api/favorite?productId=${productId}`,
+                    method: 'GET',
+                    success: function (response) {
+                        if (response === 'added') {
+                            button.querySelector('i').classList.remove('ti-heart');
+                            button.querySelector('i').classList.add('ti-heart-filled');
+                            $("#error-message").hide();
+                        } else if (response === 'removed') {
+                            button.querySelector('i').classList.remove('ti-heart-filled');
+                            button.querySelector('i').classList.add('ti-heart');
+                            $("#error-message").hide();
+                        } else if (response === 'User not found') {
+                            alert("Vui lòng đăng nhập để thêm sản phẩm yêu thích.");
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Lỗi khi thực hiện yêu thích sản phẩm:', error);
+                        $("#error-message").show().text('Có lỗi xảy ra khi thực hiện yêu thích sản phẩm. Vui lòng thử lại.');
+                    },
+                    complete: function () {
+                        button.disabled = false; // Bật lại nút sau khi hoàn tất
+                    }
+                });
+            });
+        });
+
+        // Handle avatar button clicks
+        document.querySelectorAll('.avatar-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault(); // Prevent link navigation
+                const productId = button.getAttribute('data-id');
+                // Placeholder for avatar action (e.g., redirect to profile)
+                alert(`Viewing profile for product ${productId}`);
+                // TODO: Implement actual profile redirect or action
+            });
+        });
+    </script>
+</section>
+</body>
+</html>

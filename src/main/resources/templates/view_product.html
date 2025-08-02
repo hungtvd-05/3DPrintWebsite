@@ -1,0 +1,1996 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{base::layout(~{::section})}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="Description" content="Enter your description here"/>
+
+    <title>Title</title>
+</head>
+<body>
+<section>
+    <style>
+
+        a {
+            color: rgb(20, 119, 209);
+        }
+
+        .con {
+            max-width: 1080px;
+            padding: 20px;
+            background-color: White;
+            margin: 0 auto;
+            border-radius: 16px;
+        }
+
+        .carousel-container {
+            display: flex;
+            max-width: 1080px;
+            /*padding: 20px;*/
+            margin: 0 auto;
+            gap: 20px;
+            /*background-color: White;*/
+        }
+
+        .back-button {
+            /*transform: translateY(-50%);*/
+            background: rgba(0, 0, 0, 0);
+            color: rgba(0, 0, 0, 0.5);
+            border: none;
+            width: 40px; /* Fixed size for circular buttons */
+            height: 40px; /* Fixed size for circular buttons */
+            border-radius: 50%; /* Make buttons circular */
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .back-button:hover {
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+        }
+
+        /*.avatar {*/
+        /*    width: 50px;*/
+        /*    height: 50px;*/
+        /*}*/
+
+        .info {
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Space between back button and avatar */
+            margin-bottom: 20px; /* Space below the info section */
+        }
+
+        .avatar img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%; /* Make avatar circular */
+        }
+
+        .info-text p {
+            margin: 0;
+            font-size: 12px;
+        }
+
+        .main-image {
+            flex: 2;
+            max-height: 500px; /* Optional: limit max height */
+            position: relative; /* For positioning navigation buttons */
+            background-color: #F6F7FA;
+            border-radius: 16px;
+        }
+
+        .main-image img {
+            width: 100%;
+            height: auto; /* Allow image to scale responsively */
+            object-fit: contain;
+            border-radius: 16px;
+            max-height: 500px;
+        }
+
+        .thumbnail-list {
+            overflow-y: scroll; /* Vertical scrollbar by default */
+            overflow-x: hidden; /* Prevent horizontal scrollbar */
+            padding: 0 5px; /* Align with image width */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .thumbnail-list img {
+            width: 160px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .thumbnail-list img:hover {
+            opacity: 0.8;
+        }
+
+        .thumbnail-list img.active {
+            border: 2px solid rgb(20, 119, 209);
+            opacity: 1;
+        }
+
+        /* Custom vertical scrollbar */
+        .thumbnail-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .thumbnail-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .thumbnail-list::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .thumbnail-list::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Navigation buttons */
+        .nav-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 40px; /* Fixed size for circular buttons */
+            height: 40px; /* Fixed size for circular buttons */
+            border-radius: 50%; /* Make buttons circular */
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .nav-button:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .prev-button {
+            left: 10px;
+        }
+
+        .next-button {
+            right: 10px;
+        }
+
+        .download-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 40px; /* Match nav-button size */
+            height: 40px; /* Match nav-button size */
+            border-radius: 50%; /* Make button circular */
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .download-button:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .zoom-button {
+            position: absolute;
+            top: 10px;
+            right: 60px; /* Position to the left of download button */
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 40px; /* Match nav-button size */
+            height: 40px; /* Match nav-button size */
+            border-radius: 50%; /* Make button circular */
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .zoom-button:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8); /* Semi-transparent background */
+            /*z-index: 1000;*/
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .modal-close:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .modal-nav-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .modal-nav-button:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .modal-prev-button {
+            left: 20px;
+        }
+
+        .modal-next-button {
+            right: 20px;
+        }
+
+        .modal-download-button {
+            position: absolute;
+            top: 20px;
+            right: 70px; /* To the left of close button */
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .modal-download-button:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        /* Media query for screens smaller than 500px */
+        @media (max-width: 500px) {
+            .carousel-container {
+                flex-direction: column; /* Stack main image and thumbnails vertically */
+                gap: 5px;
+            }
+
+            .main-image {
+                flex: 0; /* Remove flex grow */
+                width: 100%; /* Full width for main image */
+            }
+
+            .main-image img {
+                width: 100%;
+                max-height: 260px;
+            }
+
+            .thumbnail-list {
+                flex: 0;
+                width: 100%; /* Full width for thumbnail list */
+                height: 140px; /* Fixed height for horizontal thumbnails */
+                overflow-y: hidden; /* Disable vertical scrollbar */
+                overflow-x: scroll; /* Enable horizontal scrollbar */
+                flex-direction: row; /* Arrange thumbnails horizontally */
+                padding: 5px 0;
+                white-space: nowrap; /* Prevent wrapping */
+            }
+
+            .thumbnail-list img {
+                width: 120px; /* Smaller width for thumbnails */
+                height: 90px; /* Adjust height proportionally */
+                display: inline-block; /* Ensure horizontal alignment */
+            }
+
+            /* Custom horizontal scrollbar */
+            .thumbnail-list::-webkit-scrollbar {
+                height: 8px; /* Horizontal scrollbar height */
+            }
+
+            /* Adjust navigation buttons for smaller screens */
+            .nav-button {
+                width: 32px; /* Smaller size for smaller screens */
+                height: 32px;
+                font-size: 16px;
+            }
+
+            /*.tag-group {*/
+            /*    !*display: flex;*!*/
+            /*    flex-wrap: wrap;*/
+            /*    gap: 5px; !* Space between tags *!*/
+            /*    margin-top: 10px; !* Space above tag group *!*/
+            /*}*/
+
+        }
+
+        .tag-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px; /* Space between tags */
+            /*margin-top: 10px; !* Space above tag group *!*/
+        }
+
+        .tag-group .tag {
+            padding: 5px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .tag-group .tag:hover {
+            background-color: rgb(20, 119, 209); /* Change background color on hover */
+            color: white; /* Change text color on hover */
+            text-decoration: none; /* Remove underline on hover */
+        }
+
+        .description img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .product-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+            font-family: Arial, sans-serif;
+            aspect-ratio: 1 / 1;
+            position: relative; /* For positioning buttons */
+        }
+
+        .product-image {
+            height: calc(100% - 35.5px);
+            background-color: #f0f0f0;
+            position: relative;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-info {
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-title {
+            margin: 0;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 13px;
+            color: #5A6A85;
+        }
+
+        .avatar-button {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 40px;
+            height: 40px;
+            border: 2px solid white;
+            border-radius: 50%;
+            overflow: hidden;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .avatar-button img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-button:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .product-card:hover img {
+            filter: brightness(80%);
+        }
+
+        .favorite-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .favorite-button:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .action-button {
+            color: rgb(20, 119, 209);
+            border: none;
+            background: none;
+            font-size: 32px;
+        }
+
+        .ti-heart-filled {
+            color: rgb(20, 119, 209);
+        }
+
+        .comment-container {
+            /*max-width: 600px;*/
+            margin: 0 auto;
+            font-family: Arial, sans-serif;
+            position: relative; /* For positioning send button */
+        }
+
+        .comment-input {
+            width: 100%;
+            padding: 10px 50px 10px 15px; /* Extra padding-right for send button */
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            box-sizing: border-box;
+        }
+
+        .comment-input:focus {
+            border-color: rgb(20, 119, 209);
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+        }
+
+        .comment-input::placeholder {
+            color: #999;
+        }
+
+        .send-button {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgb(20, 119, 209);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .send-button:hover {
+            background: #0056b3;
+        }
+
+        .send-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /*.comment-list {*/
+        /*    margin-top: 20px;*/
+        /*}*/
+
+        .comment-item {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            /*border-bottom: 1px solid #eee;*/
+        }
+
+        .comment-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .comment-content {
+            flex: 1;
+        }
+
+        .comment-user {
+            font-weight: bold;
+            color: #5A6A85;
+        }
+
+        .comment-text {
+            margin: 5px 0;
+        }
+
+        .comment-date {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .comment-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .reply-button {
+            padding: 2px 8px;
+            font-size: 12px;
+            text-decoration: none;
+        }
+
+        .reply-button:hover {
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        /*.reply-input-container {*/
+        /*    !*display: flex;*!*/
+        /*    border-left: 3px solid #007bff;*/
+        /*    padding-left: 10px;*/
+        /*    background-color: #f8f9fa;*/
+        /*    border-radius: 4px;*/
+        /*    padding: 10px;*/
+        /*}*/
+
+        .replies-container {
+            border-left: 2px solid #dee2e6;
+            padding-left: 15px;
+        }
+
+        .reply-item {
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 8px;
+        }
+
+        .reply-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .reply-container {
+            /*max-width: 600px;*/
+            margin: 10px auto;
+            /*margin-bottom: 5px;*/
+            font-family: Arial, sans-serif;
+            position: relative; /* For positioning send button */
+        }
+
+        .toggle-replies-button {
+            border: none;
+        }
+
+        .file-container .file-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .file-container tbody tr {
+            border-top: 1px solid #eee;
+        }
+
+        .file-container tr td {
+            padding: 5px;
+        }
+
+        .file-container tr th {
+            padding: 5px;
+        }
+
+        .file-container tr th:last-child {
+            text-align: right;
+        }
+
+        .stl-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .stl-modal-content {
+            background: white;
+            border-radius: 8px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            padding: 20px;
+            width: 100%;
+            height: auto;
+            max-width: 840px; /* Kích thước tối đa cho desktop */
+            max-height: 90vh;
+            margin: 0 auto;
+        }
+
+        .stl-preview {
+            width: 100%;
+            background: #f8f9fa;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 4 / 3;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        .stl-preview canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+            border-radius: 4px;
+            object-fit: contain;
+            box-sizing: border-box;
+        }
+
+        .stl-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #666;
+            z-index: 10;
+        }
+
+        .stl-controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            /*display: flex;*/
+            /*gap: 5px;*/
+            z-index: 10;
+        }
+
+        .stl-control-btn {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+
+        .stl-control-btn:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .stl-info {
+            margin: 15px 0;
+            flex-shrink: 0;
+            padding: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .stl-info h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+            word-wrap: break-word;
+            font-size: 18px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .stl-info p {
+            margin: 5px 0;
+            color: #666;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .stl-modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+            margin: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .stl-loading i {
+            animation: spin 1s linear infinite;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Responsive - giữ padding đồng nhất */
+        @media (max-width: 768px) {
+            .stl-modal {
+                padding: 15px; /* Giảm padding modal */
+            }
+
+            .stl-modal-content {
+                padding: 20px; /* Giữ padding content */
+                max-width: 100%;
+                max-height: 95vh;
+            }
+
+            .stl-info h4 {
+                font-size: 16px;
+            }
+
+            .stl-info p {
+                font-size: 13px;
+            }
+
+            .stl-modal-actions {
+                justify-content: center;
+            }
+
+            .stl-modal-actions .btn {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stl-modal {
+                padding: 10px; /* Giảm padding modal */
+            }
+
+            .stl-modal-content {
+                padding: 20px; /* Vẫn giữ padding content */
+                max-width: 100%;
+                max-height: 98vh;
+            }
+
+            .stl-control-btn {
+                padding: 6px;
+                font-size: 14px;
+            }
+
+            .stl-info h4 {
+                font-size: 14px;
+            }
+
+            .stl-info p {
+                font-size: 12px;
+            }
+        }
+
+        /* Desktop specific styles */
+        @media (min-width: 1024px) {
+            .stl-modal-content {
+                width: 840px; /* Fixed width for desktop */
+                padding: 20px;
+            }
+
+            .stl-preview {
+                height: 600px; /* Fixed height maintaining 4:3 ratio */
+                aspect-ratio: auto; /* Override aspect-ratio for desktop */
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1023px) {
+            .stl-modal-content {
+                width: 640px; /* Fixed width for tablet */
+                padding: 20px;
+            }
+
+            .stl-preview {
+                height: 450px; /* Fixed height maintaining 4:3 ratio */
+                aspect-ratio: auto; /* Override aspect-ratio for tablet */
+            }
+        }
+
+
+    </style>
+    <input type="hidden" id="productId" th:value="${product.id}">
+    <div style="background-color: #F6F7FA; padding: 16px" class="pt-3">
+        <div class="con mb-3">
+            <div class="info">
+                <button onclick="history.back()" class="back-button"><i class="ti ti-chevron-left"></i></button>
+                <a th:href="'/profile:'+${product.createdBy.userId}">
+                    <div class="avatar">
+                        <img th:src="@{'/img/avatar/' + ${product.getCreatedBy().getProfileImage().isEmpty()?product.getCreatedBy().getProfileImage():'user.png'}}" alt="Product Avatar" class="avatar-img">
+                    </div>
+                </a>
+                <div class="info-text">
+                    <h5 th:text="${product.getName()}">User Name</h5>
+                    <a th:href="'/profile:'+${product.createdBy.userId}" class="text-dark"><p th:text="${product.getInfo()}">User Name</p></a>
+                </div>
+            </div>
+            <div class="container-style">
+                <div class="carousel-container">
+                    <div class="main-image">
+                        <button class="nav-button prev-button" id="prevButton"><i class="ti ti-arrow-left"></i></button>
+                        <img th:src="@{'/product/img/' + ${product.getImageFiles().iterator().next()}}" alt="Main Product Image" id="mainImage">
+                        <button class="nav-button next-button" id="nextButton"><i class="ti ti-arrow-right"></i></button>
+                        <button class="zoom-button" id="zoomButton" title="Zoom Image"><i class="ti ti-resize"></i></button>
+                        <button class="download-button" id="downloadButton" title="Download Image"><i class="ti ti-photo-down"></i></button>
+                    </div>
+                    <div class="thumbnail-list" id="thumbnailList">
+                        <img th:src="@{'/product/img/' + ${img}}" th:alt="${'Thumbnail ' + (i.index + 1)}" class="active" th:each="img, i:${product.getImageFiles()}">                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="con">
+            <div class="row text-center">
+                <div class="col ">
+                    <a class="action-button" th:href="@{/product:{id}(id=${product.id})}" title="View Product Details">
+                        <i th:class="${(view.isEmpty()) ? 'ti ti-info-circle-filled' : 'ti ti-info-circle'}"></i>
+                    </a>
+                </div>
+                <div class="col">
+                    <a class="action-button" th:href="@{/product:{id}/files(id=${product.id})}" title="View Files">
+                        <i th:class="${(view == 'files') ? 'ti ti-file-filled' : 'ti ti-file'}"></i>
+                    </a>
+                </div>
+                <div class="col">
+                    <a class="action-button" th:href="@{/product:{id}/comments(id=${product.id})}" title="View Comments">
+                        <i th:class="${(view == 'comments') ? 'ti ti-message-filled' : 'ti ti-message'}"></i>
+                    </a>
+                </div>
+                <div class="col">
+                    <button class="action-button favorite-main-button" th:data-id="${product.id}" title="Add to Favorites">
+                        <i th:class="${(user != null && user.getFavoriteProducts().contains(product.id)) ? 'ti ti-heart-filled' : 'ti ti-heart'}"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="con px-md-5 mt-3">
+            <th:block th:if="${view.isEmpty()}">
+                <div th:if="${!product.getDescription().isEmpty()}" class="description">
+                    <p th:utext="${product.getDescription()}"></p>
+                </div>
+                <h4><strong>Tag</strong></h4>
+                <div class="tag-group">
+                    <a th:href="@{'/tag:' + ${tag.getName()}}" class="tag" th:each="tag : ${product.getTags()}">
+                        <span th:text="${tag.name}">Tag Name</span>
+                    </a>
+                </div>
+            </th:block>
+            <th:block th:if="${view == 'files'}">
+                <table class="w-100 file-container">
+                    <thead>
+                        <tr>
+                            <th class="fs-4">File</th>
+                            <th class="fs-4">
+                                <button id="downloadAllStlBtn" class="btn btn-link px-0">
+                                    <i class="ti ti-download"></i> Download All Files
+                                </button>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <th:block th:each="file : ${product.getStlFiles().entrySet()}">
+                            <tr>
+                                <td>
+                                    <img th:src="'/product/stl/' + ${file.getKey()} + '_preview.png'" alt="File Image" class="file-image">
+                                </td>
+                                <td class="w-100">
+                                    <div class="file-info">
+                                        <p th:text="'Update: ' + ${#temporals.format(file.getValue().getCreatedAt(), 'dd/MM/yyyy')}">Update Date</p>
+
+                                        <div class="d-flex justify-content-between">
+                                            <p class="m-0 mt-auto" th:text="'Size: ' + ${file.getValue().getFileSizeFormatted()}">File Size</p>
+                                            <button class="btn btn-primary view-stl-btn ms-auto"
+                                                    th:data-filename="${file.getKey()}"
+                                                    th:data-filesize="${file.getValue().getFileSizeFormatted()}"
+                                                    th:data-filedate="${#temporals.format(file.getValue().getCreatedAt(), 'dd/MM/yyyy HH:mm')}"
+                                                    title="Xem chi tiết">
+                                                <i class="ti ti-eye"></i>
+                                            </button>
+
+                                            <button class="btn btn-primary download-stl-btn ms-2"
+                                                    th:data-filename="${file.getKey()}"
+                                                    title="Download File">
+                                                <i class="ti ti-download"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </th:block>
+                    </tbody>
+                </table>
+            </th:block>
+            <th:block th:if="${view == 'comments'}">
+                <div class="comment-list">
+                    <th:block th:each="comment : ${comments}">
+                        <div class="comment-item" th:if="${comment.parentComment == null}">
+                            <img class="comment-avatar" th:src="@{'/img/avatar/' + ${comment.userAccount.getProfileImage() ?: 'user.png'}}" alt="User Avatar">
+                            <div class="comment-content">
+                                <div class="comment-user" th:text="${comment.userAccount.fullName}">Username</div>
+                                <div class="comment-text" th:text="${comment.content}">Comment content</div>
+                                <div class="comment-date" th:text="${#temporals.format(comment.createdAt, 'HH:mm - dd/MM/yyyy')}">Date</div>
+                                <div class="comment-actions mt-2" th:if="${user != null}">
+                                    <button class="btn btn-sm btn-link text-muted reply-button fs-3"
+                                            th:data-comment-id="${comment.id}"
+                                            th:data-comment-user="${comment.userAccount.fullName}"
+                                    th:if="${comment.replies.isEmpty()}">
+                                        <i class="ti ti-message-circle"></i> Trả lời
+                                    </button>
+                                </div>
+
+                                <div class="reply-input-container" th:id="'reply-container-' + ${comment.id}" style="display: none;">
+                                    <div class="reply-container">
+                                        <input type="text" class="comment-input reply-input"
+                                               th:id="'reply-input-' + ${comment.id}"
+                                               placeholder="Viết phản hồi...">
+                                        <button class="send-button reply-send-button"
+                                                th:id="'reply-send-' + ${comment.id}"
+                                                th:data-comment-id="${comment.id}"
+                                                disabled>
+                                            <i class="ti ti-send"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="comment-actions">
+                                    <button class="btn btn-sm text-muted toggle-replies-button fs-3"
+                                            th:data-comment-id="${comment.id}"
+                                            th:data-reply-count="${comment.replies.size()}"
+                                            th:if="${!comment.replies.isEmpty()}">
+                                        <i class="ti ti-chevron-down"></i>
+                                        <span th:text="'Xem ' + ${comment.replies.size()} + ' phản hồi'"></span>
+                                    </button>
+                                </div>
+
+                                <div class="replies-container ms-4 mt-2" th:id="'replies-container-' + ${comment.id}" th:if="${!comment.replies.isEmpty()}" style="display: none;">
+                                    <div class="replies" th:id="'replies-' + ${comment.id}">
+                                        <div class="comment-item reply-item" th:each="reply : ${comment.replies}">
+                                            <img th:src="@{'/img/avatar/' + ${reply.userAccount.profileImage}}"
+                                                 alt="Avatar" class="comment-avatar"
+                                                 onerror="this.src='/img/avatar/default.png'">
+                                            <div class="comment-content">
+                                                <div class="comment-user" th:text="${reply.userAccount.fullName}"></div>
+                                                <div class="comment-text" th:text="${reply.content}"></div>
+                                                <div class="comment-date" th:text="${#temporals.format(reply.createdAt, 'HH:mm - dd/MM/yyyy')}"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div th:if="${user != null}" class="mt-2">
+                                        <div class="reply-container">
+                                            <input type="text" class="comment-input reply-input"
+                                                   th:id="'reply-input-bottom-' + ${comment.id}"
+                                                   placeholder="Viết phản hồi...">
+                                            <button class="send-button reply-send-button"
+                                                    th:id="'reply-send-bottom-' + ${comment.id}"
+                                                    th:data-comment-id="${comment.id}"
+                                                    disabled>
+                                                <i class="ti ti-send"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </th:block>
+                </div>
+                <div class="comment-container" th:if="${user != null}">
+                    <input type="hidden" id="parentCommentId" th:value="${null}">
+                    <input type="text" class="comment-input" id="commentInput" placeholder="Write your comment..." maxlength="500">
+                    <button class="send-button" id="sendButton" title="Send Comment" disabled><i class="ti ti-corner-right-up"></i></button>
+                </div>
+
+                <div th:if="${user == null}">
+                    <p class="text-center text-muted">Bạn cần đăng nhập để bình luận.</p>
+                    <div class="text-center">
+                        <a href="/signin" class="btn btn-primary">Đăng nhập</a>
+                    </div>
+                </div>
+
+            </th:block>
+        </div>
+        <th:block th:if="${!moreProducts.isEmpty()}">
+            <div class="con mt-3">
+                <div class="row">
+                    <a th:href="@{/product:{id}(id=${pro.id})}" class="col-xl-3 col-lg-4 col-6 p-1" th:each="pro, p:${moreProducts}">
+                        <div class="product-card">
+                            <div class="product-image">
+                                <img th:src="@{'/product/img/' + ${pro.getImageFiles()[0]}}" alt="Product Image">
+                            </div>
+                            <div class="avatar-button" th:data-user-id="${pro.createdBy.userId}" th:data-id="${pro.id}" title="View Profile">
+                                <img th:src="@{'/img/avatar/' + ${pro.getCreatedBy().getProfileImage().isEmpty() ? pro.getCreatedBy().getProfileImage(): 'user.png'}}" alt="Avatar">
+                            </div>
+                            <button class="favorite-button" th:data-id="${pro.id}" title="Add to Favorites">
+                                <i th:class="${(user != null && user.getFavoriteProducts().contains(pro.id)) ? 'ti ti-heart-filled' : 'ti ti-heart'}"></i>
+                            </button>
+                            <div class="product-info">
+                                <p class="product-title" th:utext="${pro.getName()}"></p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </th:block>
+
+        <div class="modal" id="imageModal">
+            <button class="modal-nav-button modal-prev-button" id="modalPrevButton"><i class="ti ti-arrow-left"></i></button>
+            <img id="modalImage" src="" alt="Zoomed Image">
+            <button class="modal-nav-button modal-next-button" id="modalNextButton"><i class="ti ti-arrow-right"></i></button>
+            <button class="modal-download-button" id="modalDownloadButton" title="Download Image"><i class="ti ti-photo-down"></i></button>
+            <button class="modal-close" id="modalClose"><i class="ti ti-x"></i></button>
+        </div>
+
+        <div class="stl-modal" id="stlModal">
+            <div class="stl-modal-content">
+                <div class="stl-preview" id="stlPreview">
+                    <div class="stl-loading" id="stlLoading">
+                        <i class="ti ti-loader"></i>
+                        <p>Đang tải mô hình 3D...</p>
+                    </div>
+                    <div class="stl-controls">
+                        <button class="stl-control-btn" id="toggleWireframe" title="Chuyển wireframe">
+                            📦
+                        </button>
+                    </div>
+                </div>
+
+                <div class="stl-info">
+                    <h4 id="stlFileName">File Name</h4>
+                    <p>Kích thước: <span id="stlFileSize">N/A</span></p>
+                    <p>Ngày cập nhật: <span id="stlFileDate">N/A</span></p>
+                </div>
+
+                <div class="stl-modal-actions">
+                    <button class="btn btn-primary" id="stlModalDownload">
+                        <i class="ti ti-download"></i> Tải xuống
+                    </button>
+                    <button class="btn btn-secondary" id="stlModalClose2">
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <script type="importmap">
+        {
+          "imports": {
+            "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
+          }
+        }
+    </script>
+
+    <script>
+        // const productId = document.getElementById('productId').value;
+        const mainImage = document.getElementById('mainImage');
+        const thumbnailList = document.getElementById('thumbnailList');
+        const thumbnails = document.querySelectorAll('.thumbnail-list img');
+        const prevButton = document.getElementById('prevButton');
+        const nextButton = document.getElementById('nextButton');
+        const downloadButton = document.getElementById('downloadButton');
+        const zoomButton = document.getElementById('zoomButton');
+        const imageModal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        const modalClose = document.getElementById('modalClose');
+        const modalPrevButton = document.getElementById('modalPrevButton');
+        const modalNextButton = document.getElementById('modalNextButton');
+        const modalDownloadButton = document.getElementById('modalDownloadButton');
+
+
+        // Function to sync thumbnail list height with main image for larger screens
+        function syncThumbnailListHeight() {
+            if (window.innerWidth > 500) {
+                const mainImageHeight = mainImage.getBoundingClientRect().height;
+                thumbnailList.style.height = `${mainImageHeight}px`;
+            } else {
+                thumbnailList.style.height = '140px'; // Fixed height for horizontal layout
+            }
+        }
+
+        // Function to scroll thumbnail into view
+        function scrollThumbnailIntoView(index) {
+            const thumbnail = thumbnails[index];
+            if (window.innerWidth > 500) {
+                // Vertical layout: scroll vertically
+                const thumbnailTop = thumbnail.offsetTop;
+                const thumbnailHeight = thumbnail.offsetHeight;
+                const containerHeight = thumbnailList.clientHeight;
+                const scrollPosition = thumbnailTop - (containerHeight - thumbnailHeight) / 2;
+                thumbnailList.scrollTo({ top: scrollPosition, behavior: 'smooth' });
+            } else {
+                // Horizontal layout: scroll horizontally
+                const thumbnailLeft = thumbnail.offsetLeft;
+                const thumbnailWidth = thumbnail.offsetWidth;
+                const containerWidth = thumbnailList.clientWidth;
+                const scrollPosition = thumbnailLeft - (containerWidth - thumbnailWidth) / 2;
+                thumbnailList.scrollTo({ left: scrollPosition, behavior: 'smooth' });
+            }
+        }
+
+        // Function to handle image download
+        function downloadImage() {
+            const imageSrc = mainImage.src;
+            const link = document.createElement('a');
+            link.href = imageSrc;
+            link.download = mainImage.alt || 'product-image'; // Use alt text as filename or default
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Function to handle image zoom (open modal)
+        function zoomImage() {
+            modalImage.src = mainImage.src;
+            modalImage.alt = mainImage.alt;
+            imageModal.style.display = 'flex';
+        }
+
+        // Function to close modal
+        function closeModal() {
+            imageModal.style.display = 'none';
+        }
+
+        // Handle navigation buttons in modal
+        let currentIndex = 0;
+
+        function updateImage(index) {
+            if (index >= 0 && index < thumbnails.length) {
+                thumbnails.forEach(thumb => thumb.classList.remove('active'));
+                thumbnails[index].classList.add('active');
+                mainImage.src = thumbnails[index].src;
+                mainImage.alt = thumbnails[index].alt;
+                modalImage.src = thumbnails[index].src;
+                modalImage.alt = thumbnails[index].alt;
+                currentIndex = index;
+                scrollThumbnailIntoView(index); // Scroll to the selected thumbnail
+                mainImage.addEventListener('load', syncThumbnailListHeight, { once: true });
+            }
+        }
+
+        // Run on image load
+        mainImage.addEventListener('load', syncThumbnailListHeight);
+
+        // Run on window resize for responsiveness
+        window.addEventListener('resize', syncThumbnailListHeight);
+
+        // Initial sync after DOM is loaded
+        document.addEventListener('DOMContentLoaded', syncThumbnailListHeight);
+
+        // Handle thumbnail clicks
+        thumbnails.forEach((thumbnail, index) => {
+            thumbnail.addEventListener('click', () => {
+                updateImage(index);
+            });
+        });
+
+        // Handle main navigation buttons
+        prevButton.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                updateImage(currentIndex - 1);
+            }
+        });
+
+        nextButton.addEventListener('click', () => {
+            if (currentIndex < thumbnails.length - 1) {
+                updateImage(currentIndex + 1);
+            }
+        });
+
+        // Handle modal navigation buttons
+        modalPrevButton.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                updateImage(currentIndex - 1);
+            }
+        });
+
+        modalNextButton.addEventListener('click', () => {
+            if (currentIndex < thumbnails.length - 1) {
+                updateImage(currentIndex + 1);
+            }
+        });
+
+        // Handle download button (main and modal)
+        downloadButton.addEventListener('click', downloadImage);
+        modalDownloadButton.addEventListener('click', downloadImage);
+
+        // Handle zoom button
+        zoomButton.addEventListener('click', zoomImage);
+
+        // Handle modal close
+        modalClose.addEventListener('click', closeModal);
+
+        document.querySelectorAll('.favorite-main-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault(); // Prevent default link behavior
+
+                const productId = button.getAttribute('data-id');
+                button.disabled = true; // Disable button while request is in progress
+
+                $.ajax({
+                    url: `/api/favorite?productId=${productId}`,
+                    method: 'GET',
+                    success: function (response) {
+                        if (response === 'added') {
+                            button.querySelector('i').classList.remove('ti-heart');
+                            button.querySelector('i').classList.add('ti-heart-filled');
+                            $("#error-message").hide();
+                        } else if (response === 'removed') {
+                            button.querySelector('i').classList.remove('ti-heart-filled');
+                            button.querySelector('i').classList.add('ti-heart');
+                            $("#error-message").hide();
+                        } else if (response === 'User not found') {
+                            alert("Vui lòng đăng nhập để thêm sản phẩm yêu thích.");
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error adding/removing favorite:', error);
+                        $("#error-message").show().text('Có lỗi xảy ra khi thực hiện yêu thích sản phẩm. Vui lòng thử lại.');
+                    },
+                    complete: function () {
+                        button.disabled = false; // Re-enable button after request completes
+                    }
+                });
+            });
+        })
+
+        document.querySelectorAll('.favorite-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault(); // Ngăn chặn hành vi mặc định của link
+
+                const productId = button.getAttribute('data-id');
+                button.disabled = true; // Vô hiệu hóa nút trong khi gửi yêu cầu
+
+                $.ajax({
+                    url: `/api/favorite?productId=${productId}`,
+                    method: 'GET',
+                    success: function (response) {
+                        if (response === 'added') {
+                            button.querySelector('i').classList.remove('ti-heart');
+                            button.querySelector('i').classList.add('ti-heart-filled');
+                            $("#error-message").hide();
+                        } else if (response === 'removed') {
+                            button.querySelector('i').classList.remove('ti-heart-filled');
+                            button.querySelector('i').classList.add('ti-heart');
+                            $("#error-message").hide();
+                        } else if (response === 'User not found') {
+                            alert("Vui lòng đăng nhập để thêm sản phẩm yêu thích.");
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Lỗi khi thực hiện yêu thích sản phẩm:', error);
+                        $("#error-message").show().text('Có lỗi xảy ra khi thực hiện yêu thích sản phẩm. Vui lòng thử lại.');
+                    },
+                    complete: function () {
+                        button.disabled = false; // Bật lại nút sau khi hoàn tất
+                    }
+                });
+            });
+        });
+
+        // Handle avatar button clicks
+        document.querySelectorAll('.avatar-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault(); // Prevent link navigation
+                const userId = button.getAttribute('data-user-id');
+                window.location.href = `/profile:${userId}`;
+            });
+        });
+
+
+    </script>
+
+    <script type="module" th:if="${view == 'files'}">
+        import * as THREE from 'three';
+        import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        let stlScene, stlCamera, stlRenderer, stlControls, stlMesh;
+        let isWireframe = false;
+
+        // Handle STL file clicks
+        document.addEventListener('click', (e) => {
+            // Handle download button
+            if (e.target.closest('.download-stl-btn')) {
+                const button = e.target.closest('.download-stl-btn');
+                const filename = button.getAttribute('data-filename');
+                downloadStlFile(filename);
+            }
+
+            // Handle view STL button (show modal)
+            if (e.target.closest('.view-stl-btn')) {
+                const button = e.target.closest('.view-stl-btn');
+                const filename = button.getAttribute('data-filename');
+                const filesize = button.getAttribute('data-filesize');
+                const filedate = button.getAttribute('data-filedate');
+                showStlModal(filename, filesize, filedate);
+            }
+        });
+
+        function showStlModal(filename, filesize, filedate) {
+            const modal = document.getElementById('stlModal');
+            const fileNameEl = document.getElementById('stlFileName');
+            const fileSizeEl = document.getElementById('stlFileSize');
+            const fileDateEl = document.getElementById('stlFileDate');
+            const downloadBtn = document.getElementById('stlModalDownload');
+
+            // Set modal content
+            if (fileNameEl) fileNameEl.textContent = filename;
+            if (fileSizeEl) fileSizeEl.textContent = filesize;
+            if (fileDateEl) fileDateEl.textContent = filedate;
+
+            // Set download button
+            if (downloadBtn) {
+                downloadBtn.onclick = () => downloadStlFile(filename);
+            }
+
+            // Show modal
+            modal.style.display = 'flex';
+
+            // Initialize 3D viewer after modal is shown
+            setTimeout(() => {
+                init3DViewer(filename);
+            }, 100);
+        }
+
+        function init3DViewer(filename) {
+            const container = document.getElementById('stlPreview');
+            const loading = document.getElementById('stlLoading');
+
+            if (!container) {
+                console.error('STL preview container not found');
+                return;
+            }
+
+            // Clear existing canvas
+            const existingCanvas = container.querySelector('canvas');
+            if (existingCanvas) {
+                existingCanvas.remove();
+            }
+
+            // Show loading
+            if (loading) loading.style.display = 'block';
+
+            // Get container size - đơn giản hóa
+            const containerRect = container.getBoundingClientRect();
+            const canvasWidth = containerRect.width || 800;
+            const canvasHeight = containerRect.height || 600;
+
+            // Scene setup
+            stlScene = new THREE.Scene();
+            stlScene.background = new THREE.Color(0xf0f0f0);
+
+            // Camera setup
+            const aspect = canvasWidth / canvasHeight;
+            stlCamera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+
+            // Renderer setup
+            stlRenderer = new THREE.WebGLRenderer({ antialias: true });
+            stlRenderer.setSize(canvasWidth, canvasHeight);
+            stlRenderer.shadowMap.enabled = true;
+            stlRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(stlRenderer.domElement);
+
+            // Controls setup
+            stlControls = new OrbitControls(stlCamera, stlRenderer.domElement);
+            stlControls.enableDamping = true;
+            stlControls.dampingFactor = 0.1;
+
+            // Lighting setup - giống product.js
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            stlScene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            stlScene.add(directionalLight);
+
+            // Load STL file
+            const loader = new STLLoader();
+            loader.load(
+                `/product/stl/${filename}`,
+                function (geometry) {
+                    // Hide loading
+                    if (loading) loading.style.display = 'none';
+
+                    const material = new THREE.MeshLambertMaterial({
+                        color: 0x1e88e5,
+                        transparent: true,
+                        opacity: 0.9
+                    });
+                    stlMesh = new THREE.Mesh(geometry, material);
+                    stlMesh.castShadow = true;
+                    stlMesh.receiveShadow = true;
+
+                    geometry.computeBoundingBox();
+                    const bbox = geometry.boundingBox;
+                    geometry.center();
+
+                    const maxDim = Math.max(
+                        bbox.max.x - bbox.min.x,
+                        bbox.max.y - bbox.min.y,
+                        bbox.max.z - bbox.min.z
+                    );
+
+                    // Tạo lưới và mặt phẳng ở đáy - giống product.js
+                    const gridSize = maxDim * 2;
+                    const gridHelper = new THREE.GridHelper(gridSize, 20, 0x888888, 0xcccccc);
+                    gridHelper.position.y = bbox.min.y - 0.1;
+                    stlScene.add(gridHelper);
+
+                    const planeGeometry = new THREE.PlaneGeometry(gridSize, gridSize);
+                    const planeMaterial = new THREE.MeshLambertMaterial({
+                        color: 0xffffff,
+                        transparent: true,
+                        opacity: 0.3
+                    });
+                    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+                    plane.rotation.x = -Math.PI / 2;
+                    plane.position.y = bbox.min.y - 0.05;
+                    plane.receiveShadow = true;
+                    stlScene.add(plane);
+
+                    // Set camera position
+                    const centerY = (bbox.max.y + bbox.min.y) / 2 + maxDim * 0.1;
+                    stlCamera.position.set(maxDim * 1.5, maxDim * 1.2, maxDim * 1.5);
+                    stlCamera.lookAt(0, centerY, 0);
+
+                    stlScene.add(stlMesh);
+
+                    // Start animation
+                    animate3D();
+                },
+                function (progress) {
+                    console.log('Loading progress:', (progress.loaded / progress.total * 100) + '%');
+                },
+                function (error) {
+                    console.error('Error loading STL:', error);
+                    if (loading) {
+                        loading.innerHTML = '<p style="color: red;">Lỗi tải file STL</p>';
+                    }
+                }
+            );
+
+            // Setup control buttons
+            const wireframeBtn = document.getElementById('toggleWireframe');
+
+            if (wireframeBtn) wireframeBtn.onclick = toggleWireframe;
+        }
+
+        function animate3D() {
+            if (!stlRenderer || !stlScene || !stlCamera) return;
+
+            requestAnimationFrame(animate3D);
+
+            if (stlControls) {
+                stlControls.update();
+            }
+
+            stlRenderer.render(stlScene, stlCamera);
+        }
+
+        function toggleWireframe() {
+            if (stlMesh) {
+                isWireframe = !isWireframe;
+                stlMesh.material.wireframe = isWireframe;
+
+                const btn = document.getElementById('toggleWireframe');
+                if (btn) {
+                    btn.textContent = isWireframe ? '🔲' : '📦';
+                    btn.title = isWireframe ? 'Solid view' : 'Wireframe view';
+                }
+            }
+        }
+
+        function closeStlModal() {
+            const modal = document.getElementById('stlModal');
+            modal.style.display = 'none';
+
+            // Cleanup 3D resources
+            if (stlRenderer) {
+                const canvas = stlRenderer.domElement;
+                if (canvas && canvas.parentNode) {
+                    canvas.parentNode.removeChild(canvas);
+                }
+                stlRenderer.dispose();
+                stlRenderer = null;
+            }
+            if (stlControls) {
+                stlControls.dispose();
+                stlControls = null;
+            }
+            if (stlScene) {
+                stlScene.clear();
+                stlScene = null;
+            }
+            stlCamera = null;
+            stlMesh = null;
+        }
+
+        function downloadStlFile(filename) {
+            const downloadUrl = `/product/stl/${filename}`;
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = filename;
+            link.style.display = 'none';
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Event listeners for modal
+        document.addEventListener('DOMContentLoaded', () => {
+            const closeBtn1 = document.getElementById('stlModalClose');
+            const closeBtn2 = document.getElementById('stlModalClose2');
+            const modal = document.getElementById('stlModal');
+
+            if (closeBtn1) closeBtn1.addEventListener('click', closeStlModal);
+            if (closeBtn2) closeBtn2.addEventListener('click', closeStlModal);
+
+            // Close modal when clicking outside
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    if (e.target.id === 'stlModal') {
+                        closeStlModal();
+                    }
+                });
+            }
+
+            // Close modal with Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modal && modal.style.display === 'flex') {
+                    closeStlModal();
+                }
+            });
+
+            // Handle window resize - đơn giản hóa
+            window.addEventListener('resize', () => {
+                if (stlCamera && stlRenderer && document.getElementById('stlModal').style.display === 'flex') {
+                    const container = document.getElementById('stlPreview');
+                    if (container) {
+                        const containerRect = container.getBoundingClientRect();
+                        const newWidth = containerRect.width || 800;
+                        const newHeight = containerRect.height || 600;
+
+                        stlCamera.aspect = newWidth / newHeight;
+                        stlCamera.updateProjectionMatrix();
+                        stlRenderer.setSize(newWidth, newHeight);
+                    }
+                }
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const downloadAllBtn = document.getElementById('downloadAllStlBtn');
+
+            if (downloadAllBtn) {
+                downloadAllBtn.addEventListener('click', downloadAllStlFiles);
+            }
+        });
+
+        async function downloadAllStlFiles() {
+            const downloadBtn = document.getElementById('downloadAllStlBtn');
+            const productId = document.getElementById('productId').value;
+
+            // Show loading state
+            const originalText = downloadBtn.innerHTML;
+            downloadBtn.innerHTML = '<i class="ti ti-loader"></i> Preparing Download...';
+            downloadBtn.disabled = true;
+
+            try {
+                const response = await fetch(`/api/${productId}/download-all-stl`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to download files');
+                }
+
+                // Get filename from response headers
+                const contentDisposition = response.headers.get('content-disposition');
+                let filename = 'stl-files.zip';
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                    if (filenameMatch) {
+                        filename = filenameMatch[1];
+                    }
+                }
+
+                // Create blob and download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.style.display = 'none';
+
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // Clean up
+                window.URL.revokeObjectURL(url);
+
+            } catch (error) {
+                console.error('Error downloading files:', error);
+                alert('Error downloading files. Please try again.');
+            } finally {
+                // Restore button state
+                downloadBtn.innerHTML = originalText;
+                downloadBtn.disabled = false;
+            }
+        }
+    </script>
+
+    <script th:if="${view == 'comments' && user != null}">
+        const productId = document.getElementById('productId').value;
+        const commentInput = document.getElementById('commentInput');
+        const sendButton = document.getElementById('sendButton');
+        const parentCommentId = document.getElementById('parentCommentId').value;
+        const commentList = document.querySelector('.comment-list');
+
+
+        const currentUser = {
+            fullName: /*[[${user.fullName}]]*/ 'User',
+            profileImage: /*[[${user.profileImage}]]*/ 'user.png'
+        };
+
+
+
+        commentInput.addEventListener('input', () => {
+            sendButton.disabled = commentInput.value.trim() === '';
+        });
+
+        sendButton.addEventListener('click', () => {
+            const comment = commentInput.value.trim();
+            // const parentCommentId = parentCommentIdInput.value;
+
+            if (comment) {
+                const formData = new FormData();
+                formData.append('content', comment);
+                formData.append('productId', productId);
+                if (parentCommentId && parentCommentId !== 'null') {
+                    formData.append('parentCommentId', parentCommentId);
+                }
+
+                commentInput.value = ''; // Clear input
+                sendButton.disabled = true; // Disable button after sending
+                parentCommentId.value = null; // Clear parent comment ID
+                sendButton.innerHTML = '<i class="ti ti-loader"></i>';
+                fetch('/api/add-comment', {
+                    method: 'POST',
+                    // headers: { 'Content-Type': 'application/json' },
+                    body: formData
+                }).then(response => {
+
+                }).finally(() => {
+                        sendButton.innerHTML = '<i class="ti ti-corner-right-up"></i>';
+                    }
+                );
+            }
+        });
+
+        // Allow submitting comment with Enter key
+        commentInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !sendButton.disabled) {
+                sendButton.click();
+            }
+        });
+
+    </script>
+
+    <script>
+        // Handle reply functionality
+        document.addEventListener('click', (e) => {
+            // Handle reply button click
+            // Handle reply button click
+            if (e.target.closest('.reply-button')) {
+                const button = e.target.closest('.reply-button');
+                const commentId = button.getAttribute('data-comment-id');
+                const commentUser = button.getAttribute('data-comment-user');
+
+                const replyContainer = document.getElementById(`reply-container-${commentId}`);
+                const replyInput = document.getElementById(`reply-input-${commentId}`);
+
+                if (replyContainer && replyInput) {
+                    // Check if the current reply container is already visible
+                    const isCurrentlyVisible = replyContainer.style.display === 'block';
+
+                    // Hide all other reply containers first
+                    document.querySelectorAll('.reply-input-container').forEach(container => {
+                        container.style.display = 'none';
+                    });
+
+                    // Toggle the current reply container
+                    if (isCurrentlyVisible) {
+                        // If it was visible, keep it hidden (already hidden by the forEach above)
+                        replyInput.value = ''; // Clear the input when hiding
+                    } else {
+                        // If it wasn't visible, show it
+                        replyContainer.style.display = 'block';
+                        replyInput.placeholder = `Trả lời ${commentUser}...`;
+
+                        // Smooth scroll to reply input
+                        setTimeout(() => {
+                            replyInput.focus();
+                            replyContainer.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'nearest'
+                            });
+                        }, 100);
+                    }
+                }
+            }
+
+            // Handle reply send button
+            if (e.target.closest('.reply-send-button')) {
+                const button = e.target.closest('.reply-send-button');
+                const commentId = button.getAttribute('data-comment-id');
+                const replyInput = document.getElementById(`reply-input-${commentId}`);
+
+                if (replyInput) {
+                    sendReply(commentId, replyInput.value.trim(), button);
+                }
+            }
+        });
+
+        // Handle reply input changes
+        document.addEventListener('input', (e) => {
+            if (e.target.classList.contains('reply-input')) {
+                const commentId = e.target.id.replace('reply-input-', '');
+                const sendButton = document.getElementById(`reply-send-${commentId}`);
+
+                if (sendButton) {
+                    sendButton.disabled = e.target.value.trim() === '';
+                }
+            }
+        });
+
+        // Handle Enter key for reply inputs
+        document.addEventListener('keypress', (e) => {
+            if (e.target.classList.contains('reply-input') && e.key === 'Enter') {
+                const commentId = e.target.id.replace('reply-input-', '');
+                const sendButton = document.getElementById(`reply-send-${commentId}`);
+
+                if (sendButton && !sendButton.disabled) {
+                    sendButton.click();
+                }
+            }
+        });
+
+        // Function to send reply
+        function sendReply(parentCommentId, content, sendButton) {
+            if (!content) return;
+
+            const formData = new FormData();
+            formData.append('content', content);
+            formData.append('productId', productId);
+            formData.append('parentCommentId', parentCommentId);
+
+            // Show loading state
+            sendButton.innerHTML = '<i class="ti ti-loader"></i>';
+            sendButton.disabled = true;
+
+            fetch('/api/add-comment', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => {
+                    if (response.ok) {
+                        // Clear input and hide reply container
+                        const replyInput = document.getElementById(`reply-input-${parentCommentId}`);
+                        const replyContainer = document.getElementById(`reply-container-${parentCommentId}`);
+
+                        if (replyInput) replyInput.value = '';
+                        if (replyContainer) replyContainer.style.display = 'none';
+                    } else {
+                        console.error('Failed to send reply');
+                        alert('Có lỗi xảy ra khi gửi phản hồi');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending reply:', error);
+                    alert('Có lỗi xảy ra khi gửi phản hồi');
+                })
+                .finally(() => {
+                    // Reset send button
+                    sendButton.innerHTML = '<i class="ti ti-send"></i>';
+                    sendButton.disabled = true;
+                });
+        }
+
+        // Handle toggle replies functionality
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.toggle-replies-button')) {
+                const button = e.target.closest('.toggle-replies-button');
+                const commentId = button.getAttribute('data-comment-id');
+                const replyCount = button.getAttribute('data-reply-count');
+                const repliesContainer = document.getElementById(`replies-container-${commentId}`);
+                const icon = button.querySelector('i');
+                const text = button.querySelector('span');
+
+                if (repliesContainer) {
+                    const isVisible = repliesContainer.style.display === 'block';
+
+                    if (isVisible) {
+                        // Hide replies
+                        repliesContainer.style.display = 'none';
+                        icon.className = 'ti ti-chevron-down';
+                        text.textContent = `Xem ${replyCount} phản hồi`;
+                    } else {
+                        // Show replies
+                        repliesContainer.style.display = 'block';
+                        icon.className = 'ti ti-chevron-up';
+                        text.textContent = 'Ẩn phản hồi';
+                    }
+                }
+            }
+        });
+    </script>
+    <script>
+        // Handle reply input changes for bottom reply inputs
+        document.addEventListener('input', (e) => {
+            if (e.target.id && e.target.id.startsWith('reply-input-bottom-')) {
+                const commentId = e.target.id.replace('reply-input-bottom-', '');
+                const sendButton = document.getElementById(`reply-send-bottom-${commentId}`);
+
+                if (sendButton) {
+                    sendButton.disabled = e.target.value.trim() === '';
+                }
+            }
+        });
+
+        // Handle Enter key for bottom reply inputs
+        document.addEventListener('keypress', (e) => {
+            if (e.target.id && e.target.id.startsWith('reply-input-bottom-') && e.key === 'Enter') {
+                const commentId = e.target.id.replace('reply-input-bottom-', '');
+                const sendButton = document.getElementById(`reply-send-bottom-${commentId}`);
+
+                if (sendButton && !sendButton.disabled) {
+                    sendButton.click();
+                }
+            }
+        });
+
+        // Handle bottom reply send button clicks
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.reply-send-button') && e.target.closest('.reply-send-button').id.startsWith('reply-send-bottom-')) {
+                const button = e.target.closest('.reply-send-button');
+                const commentId = button.getAttribute('data-comment-id');
+                const replyInput = document.getElementById(`reply-input-bottom-${commentId}`);
+
+                if (replyInput) {
+                    sendBottomReply(commentId, replyInput.value.trim(), button, replyInput);
+                }
+            }
+        });
+
+        // Function to send reply from bottom input
+        function sendBottomReply(parentCommentId, content, sendButton, replyInput) {
+            if (!content) return;
+
+            const formData = new FormData();
+            formData.append('content', content);
+            formData.append('productId', productId);
+            formData.append('parentCommentId', parentCommentId);
+
+            // Show loading state
+            sendButton.innerHTML = '<i class="ti ti-loader"></i>';
+            sendButton.disabled = true;
+
+            fetch('/api/add-comment', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => {
+                    if (response.ok) {
+                        // Clear input after successful send
+                        replyInput.value = '';
+                    } else {
+                        console.error('Failed to send reply');
+                        alert('Có lỗi xảy ra khi gửi phản hồi');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending reply:', error);
+                    alert('Có lỗi xảy ra khi gửi phản hồi');
+                })
+                .finally(() => {
+                    // Reset send button
+                    sendButton.innerHTML = '<i class="ti ti-send"></i>';
+                    sendButton.disabled = true;
+                });
+        }
+    </script>
+</section>
+</body>
+</html>

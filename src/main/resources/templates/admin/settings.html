@@ -1,0 +1,421 @@
+<!--them tai khoan ket noi, them chinh sach-->
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/base::layout(~{::section})}">
+<head>
+</head>
+<body>
+<section>
+    <!--  <link rel="stylesheet" th:href="@{/css/table.css}">-->
+    <div class="container-xxl">
+        <div class="row">
+            <div class="col-md-8 offset-md-2 mt-4">
+                <h4 class="text-center">Thông tin website</h4>
+                <th:block th:if="${session.succMsg}">
+                    <p class="text-success fw-bold  text-center">[[${session.succMsg}]]</p>
+                    <th:block th:text="${@commonServiceImpl.removeSessionMessage()}"></th:block>
+                </th:block>
+
+                <th:block th:if="${session.errorMsg}">
+                    <p class="text-danger fw-bold  text-center">[[${session.errorMsg}]]</p>
+                    <th:block th:text="${@commonServiceImpl.removeSessionMessage()}"></th:block>
+                </th:block>
+                <hr>
+                <div class="text-center">
+                    <img alt="" th:src="@{'/img/logo/'+${webInfo.logo}}"
+                         class="border p-2"
+                         style="width: 110px; height: 110px; border-radius: 50%;">
+                </div>
+                <form action="/admin/update-webcomponents" method="post" enctype="multipart/form-data">
+                    <input hidden="hidden" name="id" th:value="${webInfo.id}">
+                    <table class="table table-borderless">
+                        <tbody>
+                        <tr>
+                            <th scope="row">Logo website</th>
+                            <td>:</td>
+                            <td><input type="file" name="img" class="form-control"></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Tên website</th>
+                            <td>:</td>
+                            <td>
+                                <input type="text" name="name" class="form-control" th:value="${webInfo.name}">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Mô tả trang web</th>
+                            <td>:</td>
+                            <td>
+                                <textarea name="description" class="form-control">[[${webInfo.description}]]</textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Địa chỉ</th>
+                            <td>:</td>
+                            <td>
+                                <textarea name="address" class="form-control">[[${webInfo.address}]]</textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Freeship tại</th>
+                            <td>:</td>
+                            <td>
+                                <textarea name="freeShipping" class="form-control">[[${webInfo.freeShipping}]]</textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Thời gian làm việc</th>
+                            <td>:</td>
+                            <td>
+                                <textarea name="workingHours"
+                                          class="form-control">[[${webInfo.workingHours}]]</textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Số điện thoại</th>
+                            <td>:</td>
+                            <td>
+                                <input type="tel" name="phone" class="form-control" th:value="${webInfo.phone}">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Email liên hệ</th>
+                            <td>:</td>
+                            <td><input type="text" name="email" class="form-control" th:value="${webInfo.email}"></td>
+                        </tr>
+
+                        </tbody>
+                    </table>
+                    <div class="text-center mb-4">
+                        <button class="btn btn-sm bg-primary text-light">Cập nhật</button>
+                    </div>
+                </form>
+
+                <h4 class="text-center">Phương thức liên hệ</h4>
+                <hr>
+                <table class="table table-bordered mb-4">
+                    <thead>
+                    <tr>
+                        <th>
+                            <a href="javascript:void(0)"
+                               class="btn btn-primary btn-sm"
+                               data-bs-toggle="modal"
+                               data-bs-target="#add-contact-modal"
+                               data-target=".bd-example-modal-lg">
+                                <i class="ti ti-plus"></i>Thêm
+                            </a>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody id="contacts">
+                    <tr th:each="contact : ${webInfo.attributes}">
+                        <td>
+                            <div class="d-flex align-items-center justify-content-between pe-0">
+                                <p class="fs-4 mb-0">[[${contact.key}]]: <a th:href="${contact.value}">[[${contact.value}]]</a></p>
+                                <a class="delete-contact-btn btn-sm btn btn-danger ms-3" th:data-key="${contact.key}">Xóa</a>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+
+                </table>
+
+                <h4 class="text-center">Dịch vụ - Hỗ trợ</h4>
+                <hr>
+                <table class="table table-bordered mb-4">
+                    <thead>
+                    <tr>
+                        <th>
+                            <a href="javascript:void(0)"
+                               class="btn btn-primary btn-sm"
+                               data-bs-toggle="modal"
+                               data-bs-target="#add-support-modal"
+                               data-target=".bd-example-modal-lg">
+                                <i class="ti ti-plus"></i>Thêm
+                            </a>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody id="supportUrls">
+
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade bd-example-modal-lg" id="add-contact-modal" tabindex="-1" role="dialog"
+         aria-labelledby="mySmallModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="container py-3 text-body">
+                    <div class="w-100">
+                        <div class="text-center">
+                            <h5>Thêm phương thức liên lạc</h5>
+                        </div>
+                        <table class="table table-borderless">
+                            <tbody>
+                            <tr>
+                                <th scope="row">Phương thức</th>
+                                <td>:</td>
+                                <td>
+                                    <select class="form-control" name="brand" id="brand">
+                                        <option value="Facebook">
+                                            <i class="ti ti-brand-facebook"></i> Facebook
+                                        </option>
+                                        <option value="Instagram">
+                                            <i class="ti ti-brand-instagram"></i> Instagram
+                                        </option>
+                                        <option value="Pinterest">
+                                            <i class="ti ti-brand-pinterest"></i> Pinterest
+                                        </option>
+                                        <option value="Tiktok">
+                                            <i class="ti ti-brand-tiktok"></i> Tiktok
+                                        </option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Đường dẫn</th>
+                                <td>:</td>
+                                <td>
+                                    <input type="url" name="url" class="url form-control">
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="text-center">
+                            <a href="javascript:void(0)"
+                               class="add-btn btn btn-danger"
+                               id="add-contact-btn"
+                               data-mdb-button-init data-mdb-ripple-init
+                               data-bs-dismiss="modal"
+                               data-bs-target="#add-contact-modal">Thêm
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade bd-example-modal-lg" id="add-support-modal" tabindex="-1" role="dialog"
+         aria-labelledby="mySmallModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="container py-3 text-body">
+                    <div class="w-100">
+                        <div class="text-center">
+                            <h5>Thêm dịch vụ - hỗ trợ</h5>
+                        </div>
+                        <table class="table table-borderless">
+                            <tbody>
+                            <tr>
+                                <th scope="row">Tên</th>
+                                <td>:</td>
+                                <td>
+                                    <input type="text" name="title" class="title form-control">
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Đường dẫn</th>
+                                <td>:</td>
+                                <td>
+                                    <input type="url" name="url" class="url form-control">
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Vị trí</th>
+                                <td>:</td>
+                                <td>
+                                    <select class="form-control" name="position" id="position">
+                                        <option value="header">
+                                            Header
+                                        </option>
+                                        <option value="footer">
+                                            Footer
+                                        </option>
+                                        <option value="both">
+                                            Cả 2
+                                        </option>
+                                    </select>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="text-center">
+                            <a href="javascript:void(0)"
+                               class="add-support-btn btn btn-danger"
+                               id="add-support-btn"
+                               data-mdb-button-init data-mdb-ripple-init
+                               data-bs-dismiss="modal"
+                               data-bs-target="#add-support-modal">Thêm
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+
+        // function fetchContact() {
+        //   $.ajax({
+        //     url: '/api/getContactUrl',
+        //     method: 'GET',
+        //     success: function (data) {
+        //       $('#contacts').empty();
+        //       data.forEach(function (contact) {
+        //         $('#contacts').append(
+        //                 '<tr>' +
+        //                 '<td class="d-flex align-items-center">' +
+        //                   '<div class="flex-grow-1 ">' +
+        //                     '<p class="fs-4 mb-0">' + contact.name + ': ' + contact.url + '</p>' +
+        //                     '<div class="text-end">' +
+        //                       '<a class="delete-contact-btn btn-sm btn btn-danger" data-id="' + contact.id + '">Xóa</a>' +
+        //                     '</div>' +
+        //                   '</div>' +
+        //                 '</td>' +
+        //                 '</tr>'
+        //         );
+        //       })
+        //     }
+        //   });
+        // }
+        // fetchContact();
+        //
+        // function fetchSupportUrl() {
+        //   $.ajax({
+        //     url: '/api/getSupportUrl',
+        //     method: 'GET',
+        //     success: function (data) {
+        //       $('#supportUrls').empty();
+        //       data.forEach(function (supportUrl) {
+        //         $('#supportUrls').append(
+        //                 '<tr>' +
+        //                 '<td class="d-flex align-items-center">' +
+        //                   '<div class="flex-grow-1 ">' +
+        //                     '<p class="fs-4 mb-0">' + supportUrl.title + ': ' + supportUrl.url + '</p>' +
+        //                     '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+        //                       '<p class="fs-3 mb-0">Vị trí: ' + supportUrl.position + '</p>' +
+        //                       '<a class="delete-support-btn btn-sm btn btn-danger" data-id="' + supportUrl.id + '">Xóa</a>' +
+        //                     '</div>' +
+        //                   '</div>' +
+        //                 '</td>' +
+        //                 '</tr>'
+        //         );
+        //       })
+        //     }
+        //   });
+        // }
+        // fetchSupportUrl();
+
+        $(document).ready(function () {
+            $('#contacts').on('click', '.delete-contact-btn', function () {
+                var key = $(this).data('key');
+                var button = $(this);
+                $.ajax({
+                    url: '/api/deleteContactUrl',
+                    method: 'GET',
+                    data: {
+                        key: key
+                    },
+                    success: function (response) {
+                        button.closest('tr').remove();
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error adding contact:', error);
+                        alert('Có lỗi xảy ra khi thêm liên hệ.');
+                    }
+                });
+            });
+
+            $('#add-contact-btn').click(function () {
+                var formData = new FormData();
+                var brandInput = $('#add-contact-modal #brand').val();
+                var contactUrl = $('#add-contact-modal .url').val();
+
+                formData.append('name', brandInput);
+                formData.append('url', contactUrl);
+
+                $.ajax({
+                    url: '/api/addContact',
+                    method: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function (response) {
+                        $('#contacts').append(
+                            '<tr>' +
+                            '<td>' +
+                            '<div class="d-flex align-items-center justify-content-between pe-0">' +
+                            '<p class="fs-4 mb-0">' + brandInput + ': <a href="' + contactUrl + '">' + contactUrl + '</a></p>' +
+                            '<a class="delete-contact-btn btn-sm btn btn-danger ms-3" data-key="' + brandInput + '">Xóa</a>' +
+                            '</div>' +
+                            '</td>' +
+                            '</tr>'
+                        );
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error adding contact:', error);
+                        alert('Có lỗi xảy ra khi thêm liên hệ.');
+                    }
+                });
+            });
+
+            $('#add-support-btn').click(function () {
+                var formData = new FormData();
+                var title = $('#add-support-modal .title').val();
+                var urls = $('#add-support-modal .url').val();
+                var position = $('#add-support-modal #position').val();
+
+                formData.append('name', title);
+                formData.append('url', urls);
+                formData.append('position', position);
+
+                $.ajax({
+                    url: '/api/addSupportUrl',
+                    method: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function (response) {
+                        // fetchSupportUrl();
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error adding contact:', error);
+                        alert('Có lỗi xảy ra khi thêm liên hệ.');
+                    }
+                });
+            });
+
+            $('#supportUrls').on('click', '.delete-support-btn', function () {
+                var id = $(this).data('id');
+                $.ajax({
+                    url: '/api/deletesupportUrl',
+                    method: 'GET',
+                    data: {
+                        id: id
+                    },
+                    success: function (response) {
+                        // fetchSupportUrl();
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error adding contact:', error);
+                        alert('Có lỗi xảy ra khi thêm liên hệ.');
+                    }
+                });
+            });
+        });
+    </script>
+
+</section>
+
+</body>
+</html>

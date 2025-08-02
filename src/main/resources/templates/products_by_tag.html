@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{base::layout(~{::section})}">>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+</head>
+<body>
+<section>
+    <style>
+        .product-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+            /*font-family: Arial, sans-serif;*/
+            aspect-ratio: 1 / 1;
+            position: relative; /* For positioning buttons */
+        }
+
+        .product-image {
+            height: calc(100% - 35.5px);
+            background-color: #f0f0f0;
+            position: relative;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-info {
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-title {
+            margin: 0;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 13px;
+            color: #5A6A85;
+        }
+
+        .avatar-button {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 40px;
+            height: 40px;
+            border: 2px solid white;
+            border-radius: 50%;
+            overflow: hidden;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .avatar-button img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-button:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .product-card:hover img {
+            filter: brightness(80%);
+        }
+
+        .favorite-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .favorite-button:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .HomePage__homePage--rXPDS {
+            margin: 32px auto 32px;
+            max-width: 1600px;
+            padding: 0 24px;
+            width: -webkit-fill-available;
+        }
+
+        .ti-heart-filled {
+            color: rgb(20, 119, 209);
+        }
+
+        /* Media query for smaller screens */
+        @media (max-width: 500px) {
+            .avatar-button, .favorite-button {
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
+            }
+        }
+
+        .tag-input-wrapper {
+            position: relative;
+        }
+
+        .suggestion-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .suggestion-item {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .suggestion-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-height: 45px;
+        }
+
+        .tag {
+            background: #e9ecef;
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .remove-tag {
+            cursor: pointer;
+            color: #dc3545;
+        }
+
+        .HomePage__homePage--rXPDS {
+            margin: 32px auto 32px;
+            max-width: 1600px;
+            padding: 0 24px;
+            width: -webkit-fill-available;
+        }
+
+        /* Add this to your existing style section */
+        .content-wrapper {
+            min-height: calc(100vh - 120px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .products-container {
+            flex: 1;
+        }
+
+        .pagination-wrapper {
+            margin-top: auto;
+            padding-bottom: 20px;
+        }
+    </style>
+    <input type="hidden" id="view-of-web" th:value="'/tag:' + ${tagName}"/>
+
+    <div class=" HomePage__homePage--rXPDS">
+        <div class="products-container">
+            <h4 th:text="'Tag: ' + ${tagName}"></h4>
+            <div class="d-flex gap-2 flex-wrap mt-3 mb-1">
+                <button type="button" class="btn sort-btn" data-sort=""
+                        th:classappend="${sorted == '' ? 'btn-primary' : 'btn-outline-dark'}">
+                    Mặc định
+                </button>
+                <button type="button" class="btn sort-btn" data-sort="az"
+                        th:classappend="${sorted == 'az' ? 'btn-primary' : 'btn-outline-dark'}">
+                    Từ A->Z
+                </button>
+                <button type="button" class="btn sort-btn" data-sort="za"
+                        th:classappend="${sorted == 'za' ? 'btn-primary' : 'btn-outline-dark'}">
+                    Từ Z->A
+                </button>
+                <button type="button" class="btn sort-btn" data-sort="new"
+                        th:classappend="${sorted == 'new' ? 'btn-primary' : 'btn-outline-dark'}">
+                    Sản phẩm mới
+                </button>
+                <button type="button" class="btn sort-btn" data-sort="old"
+                        th:classappend="${sorted == 'old' ? 'btn-primary' : 'btn-outline-dark'}">
+                    Sản phẩm cũ
+                </button>
+            </div>
+            <th:block th:if="${products.size() > 0}">
+
+                <div class="row">
+                    <a th:href="@{/product:{id}(id=${pro.id})}" class="col-xxl-2 col-xl-3 col-lg-4 col-6" style="padding: 12px"
+                       th:each="pro, p:${products}">
+                        <div class="product-card">
+                            <div class="product-image">
+                                <img th:src="@{'/product/img/' + ${pro.getImageFiles()[0]}}" alt="Product Image">
+                            </div>
+                            <div class="avatar-button" th:data-user-id="${pro.createdBy.userId}" th:data-id="${pro.id}" title="View Profile">
+                                <img th:src="@{'/img/avatar/' + ${pro.getCreatedBy().getProfileImage().isEmpty() ? pro.getCreatedBy().getProfileImage(): 'user.png'}}"
+                                     alt="Avatar">
+                            </div>
+                            <button class="favorite-button" th:data-id="${pro.id}" title="Add to Favorites">
+                                <i th:class="${(user != null && user.getFavoriteProducts().contains(pro.id)) ? 'ti ti-heart-filled' : 'ti ti-heart'}"></i>
+                            </button>
+                            <div class="product-info">
+                                <p class="product-title" th:utext="${pro.getName()}"></p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <nav aria-label="Page navigation example" class="d-flex justify-content-center">
+                    <ul class="pagination">
+                        <li class="page-item" th:unless="${isFirst}">
+                            <a class="page-link" th:if="${sorted == ''}"
+                               th:href="@{'/tag:' + ${tagName} + '?page=' + ${page}}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                            <a class="page-link" th:unless="${sorted == ''}"
+                               th:href="@{'/tag:' + ${tagName} + '?sorted=' + ${sorted} + '&page=' + ${page}}"
+                               aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        <li th:each="i:${#numbers.sequence(1, totalPages)}" class="page-item"
+                            th:classappend="${page + 1 == i ? 'active':''}">
+                            <a class="page-link" th:if="${sorted == ''}"
+                               th:href="@{'/tag:' + ${tagName} + '?page=' + ${i}}">[[${i}]]</a>
+                            <a class="page-link" th:unless="${sorted == ''}"
+                               th:href="@{'/tag:' + ${tagName} + '?sorted=' + ${sorted} + '&page=' + ${i}}">[[${i}]]</a>
+                        </li>
+                        <li class="page-item" th:unless="${isLast}">
+                            <a class="page-link" th:if="${sorted == ''}" aria-label="Next"
+                               th:href="@{'/tag:' + ${tagName} + '?page=' + ${page + 2}}">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                            <a class="page-link" th:unless="${sorted == ''}" aria-label="Next"
+                               th:href="@{'/tag:' + ${tagName} + '?sorted=' + ${sorted} + '&page=' + ${page + 2}}">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </th:block>
+
+            <script th:inline="javascript">
+
+                const viewOfWeb = document.getElementById('view-of-web').value;
+
+                document.querySelectorAll('.favorite-button').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        e.preventDefault(); // Ngăn chặn hành vi mặc định của link
+
+                        const productId = button.getAttribute('data-id');
+                        button.disabled = true; // Vô hiệu hóa nút trong khi gửi yêu cầu
+
+                        $.ajax({
+                            url: `/api/favorite?productId=${productId}`,
+                            method: 'GET',
+                            success: function (response) {
+                                if (response === 'added') {
+                                    button.querySelector('i').classList.remove('ti-heart');
+                                    button.querySelector('i').classList.add('ti-heart-filled');
+                                    $("#error-message").hide();
+                                } else if (response === 'removed') {
+                                    button.querySelector('i').classList.remove('ti-heart-filled');
+                                    button.querySelector('i').classList.add('ti-heart');
+                                    $("#error-message").hide();
+                                } else if (response === 'User not found') {
+                                    alert("Vui lòng đăng nhập để thêm sản phẩm yêu thích.");
+                                }
+                            },
+                            error: function (xhr, status, error) {
+                                console.error('Lỗi khi thực hiện yêu thích sản phẩm:', error);
+                                $("#error-message").show().text('Có lỗi xảy ra khi thực hiện yêu thích sản phẩm. Vui lòng thử lại.');
+                            },
+                            complete: function () {
+                                button.disabled = false; // Bật lại nút sau khi hoàn tất
+                            }
+                        });
+                    });
+                });
+
+                // Handle avatar button clicks
+                document.querySelectorAll('.avatar-button').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        e.preventDefault(); // Prevent link navigation
+                        const userId = button.getAttribute('data-user-id');
+                        window.location.href = `/profile:${userId}`;
+                    });
+                });
+
+                document.querySelectorAll('.sort-btn').forEach(button => {
+                    button.addEventListener('click', function () {
+                        const sortValue = this.getAttribute('data-sort');
+
+                        // Update button styles
+                        document.querySelectorAll('.sort-btn').forEach(btn => {
+                            btn.className = 'btn sort-btn btn-outline-dark';
+                        });
+                        this.className = 'btn sort-btn btn-primary';
+
+                        // Build URL
+                        let newUrl = viewOfWeb;
+                        const params = [];
+
+                        if (sortValue) {
+                            params.push('sorted=' + encodeURIComponent(sortValue));
+                        }
+
+                        if (params.length > 0) {
+                            newUrl += '?' + params.join('&');
+                        }
+
+                        window.location.href = newUrl;
+                    });
+                });
+
+            </script>
+        </div>
+    </div>
+</section>
+</body>
+</html>

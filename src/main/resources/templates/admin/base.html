@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:fragment="layout(content)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="Description" content="Enter your description here"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+          integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"/>
+    <link rel="stylesheet" th:href="@{/css/styles.min.css}"/>
+    <link rel="icon" type="image/x-icon" th:href="@{'/img/logo/' + ${webInfo.logo}}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Modak&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+          rel="stylesheet">
+    <title>Admin</title>
+    <style>
+        .modak-regular {
+            font-family: "Modak", system-ui;
+            /*font-weight: 200;*/
+            /*font-style: normal;*/
+        }
+
+        .space-mono-regular {
+            font-family: "Space Mono", monospace;
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        .notification-dropdown {
+            border: none;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        .notification-item {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #f1f3f4;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .notification-item.unread {
+            background-color: #e3f2fd;
+            border-left: 3px solid #2196f3;
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .notification-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .notification-text {
+            flex: 1;
+            font-size: 0.875rem;
+        }
+
+        .notification-time {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+
+        .notification-badge {
+            animation: pulse 2s infinite;
+        }
+
+        /*@keyframes pulse {*/
+        /*    0% { transform: scale(1); }*/
+        /*    50% { transform: scale(1.1); }*/
+        /*    100% { transform: scale(1); }*/
+        /*}*/
+
+        .toast-notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            max-width: 400px;
+        }
+
+        .toast-notification .toast-body {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast-notification .toast-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script th:src="@{/libs/bootstrap/dist/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/sidebarmenu.js}"></script>
+<script th:src="@{/js/app.min.js}"></script>
+<script th:src="@{/libs/apexcharts/dist/apexcharts.min.js}"></script>
+<script th:src="@{/libs/simplebar/dist/simplebar.js}"></script>
+<script src="/js/NotificationManager.js"></script>
+<div th:if="${user != null}" th:data-user-id="${user.userId}" style="display: none;"></div>
+<div class="page-wrapper space-mono-regular" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6"
+     data-sidebartype="full"
+     data-sidebar-position="fixed" data-header-position="fixed">
+    <aside class="left-sidebar">
+        <div>
+            <div class="brand-logo d-flex align-items-center justify-content-between">
+                <a class="navbar-brand p-0 modak-regular" href="/"
+                   style="height: 45px; font-size: 30px; color: rgb(20, 119, 209)" th:text="${webInfo.name}"></a>
+                <div class="close-btn d-xl-none d-block sidebartoggler cursor-pointer" id="sidebarCollapse">
+                    <i class="ti ti-x fs-8"></i>
+                </div>
+            </div>
+            <nav class="sidebar-nav scroll-sidebar" data-simplebar="">
+                <ul id="sidebarnav">
+                    <li class="nav-small-cap">
+                        <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
+                        <span class="hide-menu">Home</span>
+                    </li>
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="/admin" aria-expanded="false">
+                            <span>
+                              <i class="ti ti-layout-dashboard"></i>
+                            </span>
+                            <span class="hide-menu">Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="/admin/products" aria-expanded="false">
+                        <span>
+                          <i class="ti ti-cards"></i>
+                        </span>
+                            <span class="hide-menu">Sản phẩm</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="/admin/products-of-user" aria-expanded="false">
+                        <span>
+                          <i class="ti ti-world"></i>
+                        </span>
+                            <span class="hide-menu">Cộng đồng</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="/admin/blogs" aria-expanded="false">
+                            <span>
+                                <i class="ti ti-news"></i>
+                            </span>
+                            <span class="hide-menu">Bài viết</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="/admin/policies" aria-expanded="false">
+                            <span>
+                                <i class="ti ti-book-2"></i>
+                            </span>
+                            <span class="hide-menu">Chính sách</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="/admin/don-hang" aria-expanded="false">
+                            <span>
+                                <i class="ti ti-truck-delivery"></i>
+                            </span>
+                            <span class="hide-menu">Đơn hàng</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="/admin/danh-gia" aria-expanded="false">
+                            <span>
+                                <i class="ti ti-message"></i>
+                            </span>
+                            <span class="hide-menu">Đánh giá</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="/admin/settings" aria-expanded="false">
+                            <span>
+                                <i class="ti ti-settings"></i>
+                            </span>
+                            <span class="hide-menu">Khác</span>
+                        </a>
+                    </li>
+                    <li class="nav-small-cap">
+                        <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
+                        <span class="hide-menu">Tài khoản</span>
+                    </li>
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="/admin/users" aria-expanded="false">
+                            <span>
+                                <i class="ti ti-user"></i>
+                            </span>
+                            <span class="hide-menu">Người dùng</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="/admin/admin" aria-expanded="false">
+                            <span>
+                                <i class="ti ti-shield-half-filled"></i>
+                            </span>
+                            <span class="hide-menu">Admin</span>
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+            <!-- End Sidebar navigation -->
+        </div>
+        <!-- End Sidebar scroll-->
+    </aside>
+    <!--  Sidebar End -->
+    <!--  Main wrapper -->
+    <div class="body-wrapper">
+        <!--  Header Start -->
+        <header class="app-header">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <ul class="navbar-nav">
+                    <li class="nav-item d-block d-xl-none">
+                        <a class="nav-link sidebartoggler nav-icon-hover" id="headerCollapse" href="javascript:void(0)">
+                            <i class="ti ti-menu-2"></i>
+                        </a>
+                    </li>
+                </ul>
+                <div class="navbar-collapse justify-content-end px-0" id="navbarNav">
+                    <ul class="navbar-nav flex-row ms-auto align-items-center justify-content-end">
+                        <li class="nav-item ms-3">
+                            <div class="dropdown">
+                                <a class="nav-link position-relative" href="#" style="color: rgb(20, 119, 209)"
+                                   role="button"
+                                   id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="ti ti-bell-filled fs-5"></i>
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                          id="notificationBadge" style="display: none;">0</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end notification-dropdown"
+                                    aria-labelledby="notificationDropdown"
+                                    style="width: 350px; max-height: 400px; overflow-y: auto;">
+                                    <li><h6 class="dropdown-header">Thông báo</h6></li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li class="px-3 text-center text-muted" id="noNotifications">
+                                        <small>Không có thông báo nào</small>
+                                    </li>
+                                    <div id="notificationList"></div>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li class="text-center">
+                                        <a class="dropdown-item small" href="#" id="markAllRead">Đánh dấu tất cả đã
+                                            đọc</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        <span>[[${user.fullName}]]</span>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link nav-icon-hover" href="javascript:void(0)" id="drop2"
+                               data-bs-toggle="dropdown"
+                               aria-expanded="false">
+                                <img th:src="@{'/img/avatar/' + ${user.profileImage?:'default.png'}}" alt="" width="35"
+                                     height="35" class="rounded-circle">
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end dropdown-menu-animate-up"
+                                 aria-labelledby="drop2">
+                                <div class="message-body">
+                                    <a class="d-flex align-items-center gap-2 dropdown-item" href="/admin/favorites">
+                                        <i class="ti ti-heart fs-6"></i>
+                                        <p class="mb-0 fs-3">Yêu thích</p>
+                                    </a>
+                                    <a href="/admin/profile" class="d-flex align-items-center gap-2 dropdown-item">
+                                        <i class="ti ti-user fs-6"></i>
+                                        <p class="mb-0 fs-3">My Profile</p>
+                                    </a>
+                                    <a href="/logout" class="btn btn-outline-primary mx-3 mt-2 d-block">Đăng xuất</a>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </header>
+        <!--  Header End -->
+        <div style="height: 75px"></div>
+        <div th:replace="${content}" class="mt-5"></div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Lấy pathname hiện tại (không bao gồm query parameters)
+        const currentPath = window.location.pathname;
+
+        // Tìm tất cả sidebar links
+        const sidebarLinks = document.querySelectorAll('.sidebar-link');
+
+        sidebarLinks.forEach(link => {
+            const linkPath = new URL(link.href).pathname;
+
+            // So sánh pathname
+            if (currentPath === linkPath) {
+                link.classList.add('active');
+                // Thêm class cho parent item nếu cần
+                link.closest('.sidebar-item').classList.add('active');
+            } else {
+                link.classList.remove('active');
+                link.closest('.sidebar-item').classList.remove('active');
+            }
+        });
+    });
+</script>
+</body>
+</html>

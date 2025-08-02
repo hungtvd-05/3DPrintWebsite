@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="Description" content="Enter your description here"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+          integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" th:href="@{/css/styles.min.css}"/>
+    <link rel="icon" type="image/x-icon" th:href="@{'/img/logos/' + ${webInfo.logo}}">
+    <title>Admin</title>
+</head>
+<body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script th:src="@{/libs/bootstrap/dist/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/sidebarmenu.js}"></script>
+<script th:src="@{/js/app.min.js}"></script>
+<script th:src="@{/libs/apexcharts/dist/apexcharts.min.js}"></script>
+<script th:src="@{/libs/simplebar/dist/simplebar.js}"></script>
+<div class="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
+     data-sidebar-position="fixed" data-header-position="fixed">
+    <div
+            class="position-relative overflow-hidden radial-gradient min-vh-100 d-flex align-items-center justify-content-center">
+        <div class="d-flex align-items-center justify-content-center w-100">
+            <div class="row justify-content-center w-100">
+                <div class="col-md-8 col-lg-6 col-xxl-3">
+                    <div class="card mb-0">
+                        <div class="card-body">
+                            <a href="/" class="text-nowrap logo-img text-center d-block pb-3 w-100">
+                                <img th:src="@{'/img/logos/' + ${webInfo.logo}}" height="100" alt="">
+                            </a>
+                            <h4 class="text-center">Đăng nhập</h4>
+                            <div th:if="${param.error}" class="text-danger text-center">
+
+                                <th:block th:if="${session.SPRING_SECURITY_LAST_EXCEPTION!=null}">
+                                    [[${session.SPRING_SECURITY_LAST_EXCEPTION.message}]]
+                                </th:block>
+
+                            </div>
+                            <div th:if="${param.logout}" class="text-success text-center">
+                                Đã đăng suất</div>
+                            <form action="/login" method="post">
+                                <div class="mb-3">
+                                    <label class="form-label" for="email">Email</label>
+                                    <input class="form-control" name="username" type="email" id="email">
+                                </div>
+                                <div class="mb-4">
+                                    <label class="form-label" for="password">Mật khẩu</label>
+                                    <input class="form-control" name="password" type="password" id="password">
+                                </div>
+                                <button type="submit" class="btn bg-primary text-white mb-4">Đăng nhập</button>
+                                <div class="text-center">
+                                    <a href="/forgot-password" class="text-decoration-none">Quên mật khẩu</a> <br>
+                                    Bạn không có tài khoản? <a href="/signup" class="text-decoration-none">Tạo tài khoản</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

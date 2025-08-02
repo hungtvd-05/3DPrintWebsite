@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/base::layout(~{::section})}">>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+</head>
+<body>
+<section>
+    <link rel="stylesheet" th:href="@{/css/table.css}">
+    <style>
+        .product-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+            font-family: Arial, sans-serif;
+            aspect-ratio: 1 / 1;
+        }
+
+        .product-image {
+            height: calc(100% - 76px);
+            background-color: #f0f0f0;
+            position: relative;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-info {
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-title {
+            margin: 0;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 16px;
+        }
+
+        .tag-input-wrapper {
+            position: relative;
+        }
+
+        .suggestion-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .suggestion-item {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .suggestion-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-height: 45px;
+        }
+
+        .tag {
+            background: #e9ecef;
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .remove-tag {
+            cursor: pointer;
+            color: #dc3545;
+        }
+    </style>
+    <div class=" content1">
+        <h4 class="text-center">Sản phẩm</h4>
+        <hr class="mb-1">
+        <th:block th:if="${session.succMsg}">
+            <p class="text-success fw-bold text-center">[[${session.succMsg}]]</p>
+            <th:block th:text="${@commonServiceImpl.removeSessionMessage()}"></th:block>
+        </th:block>
+
+        <th:block th:if="${session.errorMsg}">
+            <p class="text-danger fw-bold  text-center">[[${session.errorMsg}]]</p>
+            <th:block th:text="${@commonServiceImpl.removeSessionMessage()}"></th:block>
+        </th:block>
+        <form action="/admin/search-product" method="get">
+            <div class="row">
+                <div class="col-md-8 pt-2 tag-input-wrapper">
+                    <input type="text"
+                           class="form-control"
+                           id="input-sugg"
+                           placeholder="Tìm kiếm sản phẩm..."
+                           autocomplete="off"
+                    th:value="${search}"/>
+                    <div class="suggestion-list" style="display: none;">
+                        <!-- Suggestions sẽ được thêm vào đây bằng JavaScript -->
+                    </div>
+                </div>
+                <div class="col-md-4 pt-2">
+                    <div class="col">
+                        <select class="form-control" id="sortSelect" onchange="updateLocation();">
+                            <option th:selected="${sorted == ''}" value="">Mặc định</option>
+                            <option th:selected="${sorted == 'az'}" value="az">Từ A->Z</option>
+                            <option th:selected="${sorted == 'za'}" value="za">Từ Z->A</option>
+                            <option th:selected="${sorted == 'new'}" value="new">Sản phẩm mới</option>
+                            <option th:selected="${sorted == 'old'}" value="old">Sản phẩm cũ</option>
+                        </select>
+                    </div>
+
+                </div>
+
+            </div>
+        </form>
+        <th:block th:if="${products.size() > 0}">
+
+            <div class="row">
+                <div class="col-xxl-2 col-xl-3 col-sm-4 col-6" style="padding: 12px" th:each="pro, p:${products}">
+                    <div class="product-card">
+                        <div class="product-image">
+                            <img th:src="@{'/product/img/' + ${pro.getImageFiles()[0]}}" alt="Product Image">
+                        </div>
+                        <div class="product-info">
+                            <p class="product-title" th:utext="${pro.getName()}"></p>
+                        </div>
+                        <div class="action-btn row p-2 pt-0">
+                            <div class="col-3 pe-1 d-flex justify-content-center align-items-center fs-8">
+                                <i th:class="${pro.confirmed == 1 ? 'ti ti-circle-check text-success' : (pro.confirmed == 0 ? 'ti ti-circle-minus text-warning' : 'ti ti-circle-x text-danger')}"
+                                   th:attr="title=${pro.confirmed == 1 ? 'Đã xác nhận' : (pro.confirmed == 0 ? 'Chưa xác nhận' : 'Đã từ chối')}"
+                                   class="me-2" style="font-weight: bold"></i>
+                            </div>
+                            <div class="col-9 ps-1">
+                                <a th:href="@{'/admin/view_product_confirm:' + ${pro.id}}" class="btn btn-primary btn-sm w-100"><i class="ti ti-logout" style="font-weight: bold"></i> Xem</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <nav aria-label="Page navigation example" class="d-flex justify-content-center" th:if="${search.isEmpty()}">
+                <ul class="pagination">
+                    <li class="page-item" th:unless="${isFirst}">
+                        <a class="page-link" th:if="${sorted == ''}" th:href="@{'/admin/products-of-user?page=' + ${page}}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                        <a class="page-link" th:unless="${sorted == ''}" th:href="@{'/admin/products-of-user?sorted=' + ${sorted} + '&page=' + ${page}}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    <li th:each="i:${#numbers.sequence(1, totalPages)}" class="page-item" th:classappend="${page + 1 == i ? 'active':''}">
+                        <a class="page-link" th:if="${sorted == ''}" th:href="@{'/admin/products-of-user?page=' + ${i}}">[[${i}]]</a>
+                        <a class="page-link" th:unless="${sorted == ''}" th:href="@{'/admin/products-of-user?sorted=' + ${sorted} + '&page=' + ${i}}">[[${i}]]</a>
+                    </li>
+                    <li class="page-item" th:unless="${isLast}">
+                        <a class="page-link" th:if="${sorted == ''}" aria-label="Next" th:href="@{'/admin/products-of-user?page=' + ${page + 2}}">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                        <a class="page-link" th:unless="${sorted == ''}" aria-label="Next" th:href="@{'/admin/products-of-user?sorted=' + ${sorted} + '&page=' + ${page + 2}}">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <nav aria-label="Page navigation example" class="d-flex justify-content-center" th:if="${!search.isEmpty()}">
+                <ul class="pagination">
+                    <li class="page-item" th:unless="${isFirst}">
+                        <a class="page-link" th:if="${sorted == ''}" th:href="@{'/admin/products-of-user?search=' + ${search}  + '&page=' + ${page}}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                        <a class="page-link" th:unless="${sorted == ''}" th:href="@{'/admin/products-of-user?search=' + ${search}  + '&sorted=' + ${sorted} + '&page=' + ${page}}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    <li th:each="i:${#numbers.sequence(1, totalPages)}" class="page-item" th:classappend="${page + 1 == i ? 'active':''}">
+                        <a class="page-link" th:if="${sorted == ''}" th:href="@{'/admin/products-of-user?search=' + ${search} + '&page=' + ${i}}">[[${i}]]</a>
+                        <a class="page-link" th:unless="${sorted == ''}" th:href="@{'/admin/products-of-user?search=' + ${search}  + '&sorted=' + ${sorted} + '&page=' + ${i}}">[[${i}]]</a>
+                    </li>
+                    <li class="page-item" th:unless="${isLast}">
+                        <a class="page-link" th:if="${sorted == ''}" aria-label="Next" th:href="@{'/admin/products-of-user?search=' + ${search}  + '&page=' + ${page + 2}}">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                        <a class="page-link" th:unless="${sorted == ''}" aria-label="Next" th:href="@{'/admin/products-of-user?search=' + ${search}  + '&sorted=' + ${sorted} + '&page=' + ${page + 2}}">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </th:block>
+
+        <script th:inline="javascript">
+            const input = document.getElementById('input-sugg');
+            const suggestionList = document.querySelector('.suggestion-list');
+            let availableProducts = new Map();
+
+            // Lấy danh sách sản phẩm từ API hoặc Thymeleaf
+            const initialProducts = /*[[${productDTOs}]]*/ [];
+
+            initialProducts.forEach(product => {
+                availableProducts.set(product.name.toLowerCase(), { id: product.id, name: product.name });
+            });
+
+            // Xử lý input
+            input.addEventListener('input', function() {
+                const value = this.value.trim().toLowerCase();
+                updateSuggestions(value);
+            });
+
+            // Xử lý phím Enter và Escape
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSearchInput(this.value.trim());
+                } else if (e.key === 'Escape') {
+                    hideSuggestions();
+                }
+            });
+
+            // Ẩn gợi ý khi click ra ngoài
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.tag-input-wrapper')) {
+                    hideSuggestions();
+                }
+            });
+
+            function updateSuggestions(value) {
+                if (!value) {
+                    hideSuggestions();
+                    return;
+                }
+
+                const matches = [];
+                availableProducts.forEach((product, key) => {
+                    if (key.includes(value)) {
+                        matches.push(product);
+                    }
+                });
+
+                if (matches.length > 0) {
+                    showSuggestions(matches, value);
+                } else {
+                    hideSuggestions();
+                }
+            }
+
+            function showSuggestions(matches, inputValue) {
+                suggestionList.innerHTML = '';
+                matches.forEach(product => {
+                    const div = document.createElement('div');
+                    div.className = 'suggestion-item';
+                    const matchIndex = product.name.toLowerCase().indexOf(inputValue.toLowerCase());
+                    const beforeMatch = product.name.slice(0, matchIndex);
+                    const match = product.name.slice(matchIndex, matchIndex + inputValue.length);
+                    const afterMatch = product.name.slice(matchIndex + inputValue.length);
+                    div.innerHTML = `${beforeMatch}<strong>${match}</strong>${afterMatch}`;
+
+                    div.addEventListener('click', () => {
+                        // Chuyển hướng đến trang chi tiết sản phẩm hoặc thực hiện tìm kiếm
+                        handleSearchInput(product.name);
+                        input.value = '';
+                        hideSuggestions();
+                    });
+
+                    suggestionList.appendChild(div);
+                });
+
+                suggestionList.style.display = 'block';
+            }
+
+            function hideSuggestions() {
+                suggestionList.style.display = 'none';
+            }
+
+            function handleSearchInput(value) {
+                // if (!value) return;
+
+                const lowercaseValue = value.toLowerCase();
+                if (availableProducts.has(lowercaseValue)) {
+                    const product = availableProducts.get(lowercaseValue);
+                    // Chuyển hướng đến trang chi tiết sản phẩm
+                    window.location.href = `/admin/view_product_confirm:${product.id}`;
+                } else {
+                    // Thực hiện tìm kiếm với giá trị nhập vào
+                    window.location.href = `/admin/products-of-user?search=${encodeURIComponent(value)}`;
+                }
+            }
+
+            function updateLocation() {
+                var sort = document.getElementById('sortSelect').value;
+                var search = document.getElementById('input-sugg').value;
+                var newUrl = '/admin/products-of-user';
+
+                // Tạo danh sách tham số URL
+                var params = [];
+
+                // Thêm tham số tìm kiếm nếu có
+                if (search) {
+                    params.push('search=' + encodeURIComponent(search));
+                }
+
+                // Thêm tham số sắp xếp nếu có
+                if (sort) {
+                    params.push('sorted=' + encodeURIComponent(sort));
+                }
+
+                // Tạo URL đầy đủ
+                if (params.length > 0) {
+                    newUrl += '?' + params.join('&');
+                }
+
+                // Chuyển hướng đến URL mới
+                window.location.href = newUrl;
+            }
+
+            $(document).ready(function () {
+
+                $('.delete-btn').click(function () {
+                    var btn = $(this);
+                    var id = btn.data('id');
+                    var card = btn.closest('.product-card').parent();
+
+                    $.ajax({
+                        url: '/api/delete-product',
+                        method: 'GET',
+                        data: {
+                            id: id
+                        },
+                        success: function (response) {
+                            if (response) {
+                                card.fadeOut(100, function () {
+                                    $(this).remove();
+                                });
+                            }
+
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error loading revenue data:', error);
+                            $("#error-message").show().text('Không thể tải dữ liệu. Vui lòng thử lại sau.');
+                        }
+                    });
+
+                });
+            })
+
+        </script>
+    </div>
+</section>
+</body>
+</html>

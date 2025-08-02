@@ -1,0 +1,140 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+.content1 {
+    padding: 1rem;
+}
+
+.card-header {
+    background-color: #c8e6c9;
+    color: #388e3c;
+}
+
+table {
+    border-collapse: collapse;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    table-layout: fixed;
+
+    box-shadow: 0 5px 10px #e1e5ee;
+    background-color: white;
+    text-align: left;
+    overflow: hidden;
+}
+
+table thead {
+    box-shadow: 0 5px 10px #e1e5ee;
+}
+
+table tr {
+    padding: .35em;
+}
+
+table tr:nth-child(even) {
+    background-color: #f4f6fb;
+}
+
+table td {
+    padding: 1rem 2rem;
+}
+
+table th {
+    font-size: .85em;
+    text-transform: uppercase;
+
+    padding: 1rem 2rem;
+    letter-spacing: 0.1rem;
+    font-weight: 900;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dulieu {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+    justify-content: center;
+}
+
+.ten {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+
+    border: none;
+}
+
+@media screen and (max-width: 600px) {
+    * {
+        padding: 0;
+        margin: 0;
+    }
+
+    .content1 {
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+    }
+
+    .card {
+        margin: 0;
+        width: 100%;
+    }
+
+    table {
+        border: 0;
+    }
+
+    table thead {
+        border: none;
+        clip: rect(0 0 0 0);
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        padding: 0;
+        position: absolute;
+        width: 1px;
+    }
+
+    table tr {
+        border-bottom: 3px solid #ddd;
+        display: block;
+        margin-bottom: .625em;
+    }
+
+    table td {
+        border-bottom: 1px solid #ddd;
+        display: block;
+        font-size: .8em;
+        text-align: right;
+    }
+
+    table td::before {
+        content: attr(data-label);
+        float: left;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    table td:last-child {
+        border-bottom: 0;
+    }
+
+    table tr:nth-child(even) {
+        background-color: white;
+    }
+}
+
+input:disabled {
+    background-color: white !important;
+}

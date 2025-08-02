@@ -1,0 +1,84 @@
+@charset "UTF-8";
+
+* {
+    padding: 0;
+    margin: 0;
+}
+
+.card-sh {
+    box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.cat-div {
+    box-shadow: 0 0 10px 0 rgba(0, 0, 0, .1);
+}
+
+
+.remove-button-image {
+    display: none;
+    top: -17px;
+    right: -20px;
+}
+
+.position-relative:hover .remove-button-image {
+    display: block;
+}
+
+.content1 {
+    padding: 3rem;
+}
+
+@media screen and (max-width: 600px) {
+
+    .content1 {
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+    }
+}
+
+.sale-card {
+    align-items: center;
+    background-color: #feeeea;
+    border-radius: 2px;
+    color: #ee4d2d;
+    display: inline-flex;
+    font-size: 12px;
+    font-weight: 700;
+    height: 18px;
+    justify-content: center;
+    margin-left: 10px;
+    padding: 0 4px;
+}
+
+/*.carousel-indicators a img {*/
+/*    !*width: 70px !important;*!*/
+/*    display: block;*/
+/*}*/
+
+/*.carousel-indicators a {*/
+/*    width: max-content !important;*/
+/*}*/
+
+/*.carousel-indicators {*/
+/*    position: unset;*/
+/*}*/
+
+
+.carousel-indicators {
+    padding: 0;
+    margin: 0;
+    position: static;
+    /*white-space: nowrap;*/
+    /*width: 100%;*/
+}
+
+
+
+.carousel-indicators .item {
+    padding: 0;
+    /*margin: 0;*/
+}
+
+
+
+

@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:fragment="layout(content)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="Description" content="Enter your description here"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+          integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"/>
+    <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.0/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+    <link rel="stylesheet" th:href="@{/css/styles.min.css}"/>
+    <title>[[${webInfo.name}]]</title>
+    <link rel="icon" type="image/x-icon" th:href="@{'/img/logo/' + ${webInfo.logo}}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Modak&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+          rel="stylesheet">
+
+    <style>
+
+        .modak-regular {
+            font-family: "Modak", system-ui;
+            /*font-weight: 200;*/
+            /*font-style: normal;*/
+        }
+
+        .space-mono-regular {
+            font-family: "Space Mono", monospace;
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        .space-mono-bold {
+            font-family: "Space Mono", monospace;
+            font-weight: 700;
+            font-style: normal;
+        }
+
+        .space-mono-regular-italic {
+            font-family: "Space Mono", monospace;
+            font-weight: 400;
+            font-style: italic;
+        }
+
+        .space-mono-bold-italic {
+            font-family: "Space Mono", monospace;
+            font-weight: 700;
+            font-style: italic;
+        }
+
+
+        .notification-dropdown {
+            border: none;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        .notification-item {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #f1f3f4;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .notification-item.unread {
+            background-color: #e3f2fd;
+            border-left: 3px solid #2196f3;
+        }
+
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .notification-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .notification-text {
+            flex: 1;
+            font-size: 0.875rem;
+        }
+
+        .notification-time {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+
+        .notification-badge {
+            animation: pulse 2s infinite;
+        }
+
+        /*@keyframes pulse {*/
+        /*    0% { transform: scale(1); }*/
+        /*    50% { transform: scale(1.1); }*/
+        /*    100% { transform: scale(1); }*/
+        /*}*/
+
+        .toast-notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            max-width: 400px;
+        }
+
+        .toast-notification .toast-body {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast-notification .toast-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        /* Search box styles */
+        .search-form {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            max-width: 300px;
+        }
+
+        .search-input {
+            border-radius: 25px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 8px 40px 8px 15px;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .search-input:focus {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+            box-shadow: none;
+        }
+
+        .search-btn {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.8);
+            padding: 5px 10px;
+        }
+
+        .search-btn:hover {
+            color: white;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 991px) {
+            .search-form {
+                position: static;
+                transform: none;
+                width: 100%;
+                max-width: none;
+                margin: 10px 0;
+                order: 3;
+            }
+
+            /*.navbar-nav.left-nav {*/
+            /*    display: none !important;*/
+            /*}*/
+        }
+
+        @media (min-width: 992px) {
+            .search-form {
+                width: 350px;
+                max-width: 350px;
+            }
+        }
+
+        .contract-icon i {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: white;
+            font-size: 1.5rem;
+        }
+
+        /* Fix footer positioning */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Main content area should grow to fill available space */
+        .main-content {
+            flex: 1;
+            padding-top: 53px; /* Account for fixed navbar */
+        }
+
+        /* Ensure footer stays at bottom */
+        footer {
+            margin-top: auto;
+        }
+
+        /* Remove the fixed height spacer since we're using flex */
+        .navbar-spacer {
+            display: none;
+        }
+
+    </style>
+</head>
+<body class="space-mono-regular">
+
+<div th:if="${user != null}" th:data-user-id="${user.userId}" style="display: none;"></div>
+
+<nav class="navbar navbar-expand-lg fixed-top p-1" style="background-color: rgb(20, 119, 209);">
+    <!-- Navbar content unchanged -->
+    <div class="container-fluid">
+        <!-- Logo -->
+        <a class="navbar-brand p-0 text-white modak-regular" href="/" style="height: 45px; font-size: 30px;"
+           th:text="${webInfo.name}"></a>
+
+        <!-- Toggle button for mobile -->
+        <button class="navbar-toggler text-white fs-8" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                aria-expanded="false" aria-label="Toggle navigation" style="border: none">
+            <i class="ti ti-category"></i>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <!-- Left navigation items (hidden on mobile) -->
+            <ul class="navbar-nav me-auto ms-3 left-nav">
+                <li class="nav-item dropdown active">
+                    <a class="nav-link dropdown-toggle text-white" href="#" id="navbarDropdown"
+                       role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Thiết kế & Sản phẩm
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="/products:owner">Sản phẩm của [[${webInfo.name}]]</a>
+                        <a class="dropdown-item" href="/products:community">Thiết kế của cộng đồng</a>
+                        <a class="dropdown-item" href="/products">Tất cả</a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" aria-current="page" href="/blogs">Blog</a>
+                </li>
+            </ul>
+
+            <!-- Right navigation items -->
+            <ul class="navbar-nav ms-auto me-3">
+                <!-- Navigation content unchanged -->
+                <th:block th:if="${user == null}">
+                    <li class="nav-item ms-3">
+                        <a class="nav-link text-white" aria-current="page" href="/signin">
+                            <i class="fa-solid fa-right-to-bracket"></i> Đăng nhập
+                        </a>
+                    </li>
+                    <li class="nav-item ms-3">
+                        <a class="nav-link text-white" aria-current="page" href="/signup">Đăng kí</a>
+                    </li>
+                </th:block>
+
+                <th:block th:if="${user != null}">
+                    <!-- User navigation content unchanged -->
+                    <li class="nav-item ms-3">
+                        <div class="dropdown">
+                            <a class="nav-link text-white position-relative" href="#" role="button"
+                               id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="ti ti-bell-filled fs-5"></i>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                      id="notificationBadge" style="display: none;">0</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end notification-dropdown"
+                                aria-labelledby="notificationDropdown"
+                                style="width: 350px; max-height: 400px; overflow-y: auto;">
+                                <li><h6 class="dropdown-header">Thông báo</h6></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li class="px-3 text-center text-muted" id="noNotifications">
+                                    <small>Không có thông báo nào</small>
+                                </li>
+                                <div id="notificationList"></div>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li class="text-center">
+                                    <a class="dropdown-item small" href="#" id="markAllRead">Đánh dấu tất cả đã đọc</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+
+                    <th:block th:if="${user.role == 'ROLE_USER'}">
+                        <li class="nav-item ms-3">
+                            <a class="nav-link text-white" href="/user/gio-hang">
+                                <i class="fa-solid fa-cart-shopping"></i> Giỏ hàng [ [[${countCart}]] ]
+                            </a>
+                        </li>
+
+                        <li class="nav-item dropdown ms-3">
+                            <a class="nav-link dropdown-toggle active text-white" href="#" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="ti ti-user-filled fs-5"></i> [[${user.fullName}]]
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/user/profile">Profile</a></li>
+                                <li><a class="dropdown-item" href="/user/my-products">Thiết kế của tôi</a></li>
+                                <li><a class="dropdown-item" href="/user/favorites">Yêu thích</a></li>
+                                <li><a class="dropdown-item" href="/user/don-hang">Đơn hàng của tôi</a></li>
+                                <li><a class="dropdown-item" href="/logout"><i class="ti ti-logout"></i> Đăng xuất</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </th:block>
+
+                    <th:block th:unless="${user.role == 'ROLE_USER'}">
+                        <li class="nav-item dropdown ms-3">
+                            <a class="nav-link dropdown-toggle active text-white" href="#" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="ti ti-user-filled fs-5"></i> [[${user.fullName}]]
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/admin/profile">Profile</a></li>
+                                <li><a class="dropdown-item" href="/admin">Admin</a></li>
+                                <li><a class="dropdown-item" href="/admin/favorites">Yêu thích</a></li>
+                                <li><a class="dropdown-item" href="/logout"><i class="ti ti-logout"></i> Đăng xuất</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </th:block>
+                </th:block>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Main content wrapper -->
+<main class="main-content">
+    <div th:replace="${content}"></div>
+</main>
+
+<!-- Footer -->
+<footer class="text-center text-lg-start text-white" style="background: rgb(20, 119, 209);">
+    <!-- Footer content unchanged -->
+    <section class="d-flex justify-content-center justify-content-lg-between p-4">
+        <div class="me-5 d-none d-lg-block my-auto">
+            <span>Kết nối với chúng tôi:</span>
+        </div>
+        <div class="d-flex">
+            <a th:href="${entry.value}" class="mx-2 fs-5 contract-icon"
+               th:each="entry:${webInfo.attributes.entrySet()}">
+                <i class="ti ti-brand-meta" th:if="${entry.key == 'Facebook'}"></i>
+                <i class="ti ti-brand-instagram" th:if="${entry.key == 'Instagram'}"></i>
+                <i class="ti ti-brand-tiktok-filled" th:if="${entry.key == 'Tiktok'}"></i>
+                <i class="fa-brands fa-pinterest" th:if="${entry.key == 'Pinterest'}"></i>
+            </a>
+        </div>
+    </section>
+
+    <div class="text-center p-4" style="background-color: rgba(0, 0, 0, 0.05);">
+        <div class="container text-center text-md-start mt-5">
+            <div class="row mt-3">
+                <div class="col-md-5 col-lg-6 col-xl-5 mx-auto mb-4">
+                    <h6 class="text-uppercase mb-4 text-white"><b>[[${webInfo.name}]]</b></h6>
+                    <div class="row">
+                        <div class="col-md mb-3">[[${webInfo.description}]]</div>
+                        <div class="col-md">
+                            <b>Địa chỉ</b>
+                            <p style="white-space: pre-wrap; word-wrap: break-word;">[[${webInfo.address}]]</p>
+                            <p th:if="${!webInfo.freeShipping.isEmpty()}">Freeship tại:
+                                <b>[[${webInfo.freeShipping}]]</b></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-lg-2 col-xl-2 mx-auto mb-4">
+                    <h6 class="text-uppercase fw-bold text-white mb-4"><b>Hỗ trợ khách hàng</b></h6>
+                    <p><a class="text-reset" href="/policies">Chính sách - Dịch vụ</a></p>
+                    <p th:each="policy:${policiesInfo}">
+                        <a class="text-reset" th:href="${'/policy:' + policy.id}">
+                            [[${policy.title}]]
+                        </a>
+                    </p>
+                </div>
+
+                <div class="col-md-4 col-lg-3 col-xl-3 mx-auto mb-md-0 mb-4">
+                    <h6 class="text-uppercase text-white fw-bold mb-4"><b>Chăm sóc khách hàng</b></h6>
+                    <p class="fs-4" th:if="${!webInfo.phone.isEmpty()}"><i class="ti ti-phone-call"></i>[[${webInfo.phone}]]
+                    </p>
+                    <u class="fs-4" th:if="${!webInfo.email.isEmpty()}"><i
+                            class="ti ti-mail"></i>[[${webInfo.email}]]</u>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Scripts unchanged -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.2/umd/popper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.0/js/bootstrap.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js"></script>
+<script src="/js/NotificationManager.js"></script>
+
+</body>
+</html>

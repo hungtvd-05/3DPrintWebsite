@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/base::layout(~{::section})}">>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+</head>
+<body>
+<section>
+    <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.css">
+    <div class="container-sm content1 fs-5">
+        <div class="card card-sh">
+            <div class="card-body">
+                <div class="text-center">
+                    <h4 th:if="${blog.isBlog}">Bài viết</h4>
+                    <h4 th:if="${!blog.isBlog}">Chính sách</h4>
+                    <th:block th:if="${session.succMsg}">
+                        <p class="text-success fw-bold">[[${session.succMsg}]]</p>
+                        <th:block th:text="${@commonServiceImpl.removeSessionMessage()}"></th:block>
+                    </th:block>
+
+                    <th:block th:if="${session.errorMsg}">
+                        <p class="text-danger fw-bold">[[${session.errorMsg}]]</p>
+                        <th:block th:text="${@commonServiceImpl.removeSessionMessage()}"></th:block>
+                    </th:block>
+                </div>
+                <form action="/admin/update-blog" method="post" enctype="multipart/form-data" id="productForm">
+                    <input type="hidden" name="style" th:value="${blog.isBlog}">
+                    <input type="hidden" name="id" th:value="${blog.id}">
+                    <div class="row">
+                        <div class="mb-3 col-xl-9 col-lg-8">
+                            <label for="ten">Nhập tiêu đề</label>
+                            <input type="text" name="title" id="ten" class="form-control" required
+                                   th:value="${blog.title}">
+                        </div>
+                        <div class="mb-3 col-xl-3 col-lg-4">
+                            <label for="active">Trạng thái</label>
+                            <div class="d-flex">
+                                <div class="form-check" style="margin-right: 20px">
+                                    <input class="form-check-input" type="radio" name="status" id="active" value="true"
+                                           th:checked="${blog.status}">
+                                    <label class="form-check-label" for="active">
+                                        Hiện
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="status" id="inactive"
+                                           value="false" th:checked="${!blog.status}">
+                                    <label class="form-check-label" for="inactive">
+                                        Ẩn
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editor">Nhập nôi dung</label>
+                        <textarea id="editor" name="content" class="form-control" th:utext="${blog.content}"></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-2 pe-0">
+                            <a onclick="history.back()" class="btn btn-success w-100"><i class="ti ti-logout-2"></i></a>
+                        </div>
+                        <div class="col-2 pe-0">
+                            <a th:href="'/admin/delete-blog:' + ${blog.id}" class="btn btn-danger w-100"><i class="ti ti-trash-x"></i></a>
+                        </div>
+                        <div class="col-8">
+                            <button class="btn btn-primary w-100">Cập nhật</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "ckeditor5": "https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.js",
+                "ckeditor5/": "https://cdn.ckeditor.com/ckeditor5/43.2.0/"
+            }
+        }
+    </script>
+    <script type="module" th:src="@{/js/ckeditor.js}"></script>
+    <script type="text/javascript" th:src="@{/js/product.js}"></script>
+
+</section>
+
+</body>
+</html>
