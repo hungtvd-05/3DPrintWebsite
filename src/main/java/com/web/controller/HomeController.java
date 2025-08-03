@@ -49,14 +49,17 @@ public class HomeController {
     @Autowired
     private BlogService blogService;
 
+    @Autowired
+    private CartService cartService;
+
     @ModelAttribute
     public void getUserDetails(Principal p, Model m) {
 
         if (p != null) {
             String email = p.getName();
-            UserAccount user = userService.findByEmail(email).getUserAccount();
+            UserAccount user = userService.getUserAccountByEmail(email);
+            m.addAttribute("countCart", cartService.countCartByUserId(user.getUserId()));
             m.addAttribute("user", user);
-            m.addAttribute("countCart", 0);
         }
         WebInfo webInfo = webInfoService.getWebInfo();
         m.addAttribute("webInfo", (webInfo != null) ? webInfo : new WebInfo());
@@ -99,16 +102,18 @@ public class HomeController {
         User user = new User();
         user.setEmail(email);
         user.setPassword(password);
+
         UserAccount userAccount = new UserAccount();
         userAccount.setFullName(fullName);
         userAccount.setPhoneNumber(phoneNumber);
         userAccount.setEmail(email);
-        user.setUserAccount(userAccount);
+
+//        user.setUserAccount(userAccount);
 
         String confirmToken = UUID.randomUUID().toString();
         user.setConfirmToken(confirmToken);
 
-        User addUser = userService.addUser(user);
+        User addUser = userService.addUser(user, userAccount);
 
         if (!ObjectUtils.isEmpty(addUser)) {
 

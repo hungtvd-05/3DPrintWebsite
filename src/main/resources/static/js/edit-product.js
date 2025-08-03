@@ -354,7 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Thêm tags vào FormData
         formData.append('tags', JSON.stringify(selectedTags));
-        formData.append('deleteTags', JSON.stringify(Array.from(setTag.deleteTags)));
+        // formData.append('deleteTags', JSON.stringify(Array.from(setTag.deleteTags)));
 
         // Log nội dung FormData để kiểm tra
         for (let pair of formData.entries()) {

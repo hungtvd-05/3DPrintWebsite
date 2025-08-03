@@ -240,6 +240,74 @@
             display: none;
         }
 
+        /* Fix dropdown menu width and text display */
+        /*.navbar .dropdown-menu {*/
+        /*    min-width: 220px;*/
+        /*    white-space: nowrap;*/
+        /*    border-radius: 8px;*/
+        /*    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);*/
+        /*    z-index: 1050;*/
+        /*}*/
+
+        /*.navbar .dropdown-item {*/
+        /*    padding: 0.75rem 1rem;*/
+        /*    font-size: 0.9rem;*/
+        /*    transition: background-color 0.2s;*/
+        /*    white-space: nowrap;*/
+        /*    overflow: visible;*/
+        /*    text-overflow: unset;*/
+        /*}*/
+
+        /*.navbar .dropdown-item:hover {*/
+        /*    background-color: #f8f9fa;*/
+        /*}*/
+
+        /* Ensure dropdown doesn't get cut off on right side */
+        .navbar .dropdown-menu-end {
+            right: 0;
+            left: auto;
+        }
+
+        /* Force dropdown to stay within viewport */
+        .navbar .dropdown {
+            position: static;
+        }
+
+        @media (min-width: 992px) {
+            .navbar .dropdown {
+                position: relative;
+            }
+
+            .navbar .dropdown-menu {
+                position: absolute;
+                top: 100%;
+                left: auto;
+                right: 0;
+                transform: none;
+            }
+
+            /* Adjust dropdown position for user menu */
+            .navbar .nav-item.dropdown:last-child .dropdown-menu {
+                right: 0;
+                left: auto;
+                min-width: 250px;
+            }
+        }
+
+        /* Responsive dropdown adjustments */
+        @media (max-width: 991px) {
+            .navbar .dropdown-menu {
+                position: static !important;
+                transform: none !important;
+                width: 100%;
+                box-shadow: none;
+                border: none;
+                margin-top: 0;
+                min-width: unset;
+            }
+        }
+
+
     </style>
 </head>
 <body class="space-mono-regular">
@@ -262,7 +330,7 @@
 
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <!-- Left navigation items (hidden on mobile) -->
-            <ul class="navbar-nav me-auto ms-3 left-nav">
+            <ul class="navbar-nav me-auto left-nav">
                 <li class="nav-item dropdown active">
                     <a class="nav-link dropdown-toggle text-white" href="#" id="navbarDropdown"
                        role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -280,26 +348,26 @@
             </ul>
 
             <!-- Right navigation items -->
-            <ul class="navbar-nav ms-auto me-3">
+            <ul class="navbar-nav">
                 <!-- Navigation content unchanged -->
                 <th:block th:if="${user == null}">
-                    <li class="nav-item ms-3">
+                    <li class="nav-item">
                         <a class="nav-link text-white" aria-current="page" href="/signin">
                             <i class="fa-solid fa-right-to-bracket"></i> Đăng nhập
                         </a>
                     </li>
-                    <li class="nav-item ms-3">
+                    <li class="nav-item">
                         <a class="nav-link text-white" aria-current="page" href="/signup">Đăng kí</a>
                     </li>
                 </th:block>
 
                 <th:block th:if="${user != null}">
                     <!-- User navigation content unchanged -->
-                    <li class="nav-item ms-3">
+                    <li class="nav-item">
                         <div class="dropdown">
                             <a class="nav-link text-white position-relative" href="#" role="button"
                                id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="ti ti-bell-filled fs-5"></i>
+                                <i class="ti ti-bell-filled fs-4"></i>
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
                                       id="notificationBadge" style="display: none;">0</span>
                             </a>
@@ -325,21 +393,22 @@
                     </li>
 
                     <th:block th:if="${user.role == 'ROLE_USER'}">
-                        <li class="nav-item ms-3">
-                            <a class="nav-link text-white" href="/user/gio-hang">
-                                <i class="fa-solid fa-cart-shopping"></i> Giỏ hàng [ [[${countCart}]] ]
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/user/cart">
+                                <i class="ti ti-shopping-cart fs-4"></i>[<span id="cart-count" th:text="${countCart}"></span>]
                             </a>
                         </li>
 
-                        <li class="nav-item dropdown ms-3">
+                        <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle active text-white" href="#" role="button"
                                data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="ti ti-user-filled fs-5"></i> [[${user.fullName}]]
+                                <i class="ti ti-user-filled fs-4"></i> [[${user.fullName}]]
                             </a>
-                            <ul class="dropdown-menu">
+                            <ul class="dropdown-menu dropdown-menu-end">
                                 <li><a class="dropdown-item" href="/user/profile">Profile</a></li>
                                 <li><a class="dropdown-item" href="/user/my-products">Thiết kế của tôi</a></li>
                                 <li><a class="dropdown-item" href="/user/favorites">Yêu thích</a></li>
+                                <li><a class="dropdown-item" href="/user/addresses">Địa chỉ của tôi</a></li>
                                 <li><a class="dropdown-item" href="/user/don-hang">Đơn hàng của tôi</a></li>
                                 <li><a class="dropdown-item" href="/logout"><i class="ti ti-logout"></i> Đăng xuất</a>
                                 </li>
@@ -348,10 +417,10 @@
                     </th:block>
 
                     <th:block th:unless="${user.role == 'ROLE_USER'}">
-                        <li class="nav-item dropdown ms-3">
+                        <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle active text-white" href="#" role="button"
                                data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="ti ti-user-filled fs-5"></i> [[${user.fullName}]]
+                                <i class="ti ti-user-filled fs-4"></i> [[${user.fullName}]]
                             </a>
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="/admin/profile">Profile</a></li>

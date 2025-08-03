@@ -37,7 +37,9 @@ public class Product {
 
     @Lob
     @Column(columnDefinition = "TEXT")
-    private  String description;
+    private String description;
+
+    private Boolean isAcceptAdmin = false;
 
     @ElementCollection
     @CollectionTable(name = "product_image_files",

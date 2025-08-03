@@ -1,14 +1,13 @@
 package com.web.controller;
 
 import com.web.model.*;
-import com.web.service.BlogService;
-import com.web.service.ProductService;
-import com.web.service.UserService;
-import com.web.service.WebInfoService;
+import com.web.service.*;
 import com.web.util.CommonUtil;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -50,14 +49,20 @@ public class UserController {
     @Autowired
     private BlogService blogService;
 
+    @Autowired
+    private CartService cartService;
+
+    @Autowired
+    private AddressService addressService;
+
     @ModelAttribute
     public void getUserDetails(Principal p, Model m) {
 
         if (p != null) {
             String email = p.getName();
-            UserAccount user = userService.findByEmail(email).getUserAccount();
+            UserAccount user = userService.getUserAccountByEmail(email);
+            m.addAttribute("countCart", cartService.countCartByUserId(user.getUserId()));
             m.addAttribute("user", user);
-            m.addAttribute("countCart", 0);
         }
         WebInfo webInfo = webInfoService.getWebInfo();
         m.addAttribute("webInfo", (webInfo != null) ? webInfo : new WebInfo());
@@ -128,11 +133,12 @@ public class UserController {
                                 @RequestParam(value = "img", required = false) MultipartFile img,
                                 @RequestParam String fullName,
                                 @RequestParam String phoneNumber,
+                                @RequestParam(value = "linkToOrder", defaultValue = "") String linkToOrder,
                                 Principal p,
                                 HttpSession session) throws IOException {
 
 
-        UserAccount user = userService.findByEmail(p.getName()).getUserAccount();
+        UserAccount user = userService.getUserAccountByEmail(p.getName());
 
         if (user == null || !Objects.equals(user.getUserId(), id)) {
             return "redirect:/user/profile";
@@ -159,6 +165,7 @@ public class UserController {
 
         user.setFullName(fullName.trim());
         user.setPhoneNumber(phoneNumber.trim());
+        user.setLinkToOrder(linkToOrder.trim());
 
         if (!ObjectUtils.isEmpty(userService.updateUserAccount(user))) {
             session.setAttribute("succMsg", "Cập nhật thông tin thành công!");
@@ -182,7 +189,7 @@ public class UserController {
                                 HttpSession session) throws IOException {
 
 
-        UserAccount user = userService.findByEmail(p.getName()).getUserAccount();
+        UserAccount user = userService.getUserAccountByEmail(p.getName());
 
         if (user == null || !Objects.equals(user.getUserId(), id)) {
             return "redirect:/user/profile";
@@ -315,5 +322,139 @@ public class UserController {
         }
 
         return images;
+    }
+
+    @GetMapping("/cart")
+    public String viewCart(Model m, Principal p) {
+
+        UserAccount user = userService.getUserAccountByEmail(p.getName());
+
+        List<CartItemDTO> cartItems = cartService.getCartWithProducts(user.getUserId());
+
+        m.addAttribute("cartItems", cartItems);
+
+        return "user/cart";
+    }
+
+    @PostMapping("/update-quantity")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateQuantity(@RequestBody UpdateQuantityRequest request) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            boolean success = cartService.updateQuantity(request.getCartId(), request.getQuantity());
+
+            if (success) {
+                response.put("success", true);
+                response.put("message", "Quantity updated successfully");
+                response.put("cartId", request.getCartId());
+                response.put("newQuantity", request.getQuantity());
+            } else {
+                response.put("success", false);
+                response.put("message", "Cart item not found");
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error updating quantity: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PostMapping("/delete-cart-item")
+    public ResponseEntity<Map<String, Object>> deleteCartItem(@RequestBody DeleteCartRequest request) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            boolean success = cartService.deleteCartItem(request.getCartId());
+
+            if (success) {
+                response.put("success", true);
+                response.put("message", "Cart item deleted successfully");
+            } else {
+                response.put("success", false);
+                response.put("message", "Cart item not found");
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error deleting cart item");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @GetMapping("/addresses")
+    public String viewAddress(Model m, Principal p) {
+        UserAccount user = userService.getUserAccountByEmail(p.getName());
+        List<Address> addresses = addressService.findByUserId(user.getUserId());
+        m.addAttribute("addresses", addresses);
+        return "user/addresses";
+    }
+
+    @GetMapping("/add-address")
+    private String addAddress(Model m, Principal p) {
+        return "user/add-address";
+    }
+
+    @PostMapping("/add-address")
+    public String addAddress(@ModelAttribute Address address, Principal p, HttpSession session) {
+
+        if (!ObjectUtils.isEmpty(addressService.addAddress(address))) {
+            session.setAttribute("succMsg", "Thêm địa chỉ thành công!");
+        } else {
+            session.setAttribute("errorMsg", "Không thể thêm địa chỉ!");
+        }
+
+        return "redirect:/user/addresses";
+    }
+
+    @PostMapping("/update-default-address")
+    public ResponseEntity<Map<String, Object>> updateDefaultAddress(@RequestBody UpdateDefaultAddressRequest request) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            boolean success = addressService.updateDefaultAddress(request.getAddressId());
+
+            if (success) {
+                response.put("success", true);
+                response.put("message", "Default address updated successfully");
+            } else {
+                response.put("success", false);
+                response.put("message", "Address not found");
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error updating default address");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @GetMapping("/edit-address:{id:[0-9]+}")
+    public String editAddressPage(@PathVariable Long id, Model model) {
+        Address address = addressService.findById(id);
+        if (address != null) {
+            model.addAttribute("address", address);
+            return "user/edit-address";
+        }
+        return "redirect:/user/addresses";
+    }
+
+    @PostMapping("/update-address")
+    public String updateAddress(@ModelAttribute Address address, Principal p, HttpSession session) {
+
+        if (!ObjectUtils.isEmpty(addressService.addAddress(address))) {
+            session.setAttribute("succMsg", "Cập nhật địa chỉ thành công!");
+        } else {
+            session.setAttribute("errorMsg", "Không thể cập nhật địa chỉ!");
+        }
+
+        return "redirect:/user/addresses";
     }
 }

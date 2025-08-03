@@ -19,6 +19,7 @@ import java.util.Set;
 @Entity
 public class UserAccount {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
     @Column(unique = true, nullable = false)
@@ -27,6 +28,8 @@ public class UserAccount {
     private String fullName;
 
     private String phoneNumber;
+
+    private String linkToOrder = "";
 
     private String address;
 

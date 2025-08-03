@@ -787,8 +787,12 @@
         }
 
         @keyframes spin {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
         }
 
         /* Responsive - giữ padding đồng nhất */
@@ -872,7 +876,59 @@
         }
 
 
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .cart-notification {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #28a745;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .alert-dismissible .btn-close {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .cart-notification {
+                min-width: 280px !important;
+                max-width: 90vw !important;
+                right: 10px !important;
+                top: 10px !important;
+            }
+
+            .cart-notification .btn {
+                font-size: 12px;
+                padding: 4px 8px;
+            }
+        }
+
     </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <input type="hidden" id="productId" th:value="${product.id}">
     <div style="background-color: #F6F7FA; padding: 16px" class="pt-3">
         <div class="con mb-3">
@@ -880,25 +936,70 @@
                 <button onclick="history.back()" class="back-button"><i class="ti ti-chevron-left"></i></button>
                 <a th:href="'/profile:'+${product.createdBy.userId}">
                     <div class="avatar">
-                        <img th:src="@{'/img/avatar/' + ${product.getCreatedBy().getProfileImage().isEmpty()?product.getCreatedBy().getProfileImage():'user.png'}}" alt="Product Avatar" class="avatar-img">
+                        <img th:src="@{'/img/avatar/' + ${product.getCreatedBy().getProfileImage().isEmpty()?product.getCreatedBy().getProfileImage():'user.png'}}"
+                             alt="Product Avatar" class="avatar-img">
                     </div>
                 </a>
                 <div class="info-text">
                     <h5 th:text="${product.getName()}">User Name</h5>
-                    <a th:href="'/profile:'+${product.createdBy.userId}" class="text-dark"><p th:text="${product.getInfo()}">User Name</p></a>
+                    <a th:href="'/profile:'+${product.createdBy.userId}" class="text-dark"><p
+                            th:text="${product.getInfo()}">User Name</p></a>
                 </div>
             </div>
             <div class="container-style">
                 <div class="carousel-container">
                     <div class="main-image">
                         <button class="nav-button prev-button" id="prevButton"><i class="ti ti-arrow-left"></i></button>
-                        <img th:src="@{'/product/img/' + ${product.getImageFiles().iterator().next()}}" alt="Main Product Image" id="mainImage">
-                        <button class="nav-button next-button" id="nextButton"><i class="ti ti-arrow-right"></i></button>
-                        <button class="zoom-button" id="zoomButton" title="Zoom Image"><i class="ti ti-resize"></i></button>
-                        <button class="download-button" id="downloadButton" title="Download Image"><i class="ti ti-photo-down"></i></button>
+                        <img th:src="@{'/product/img/' + ${product.getImageFiles().iterator().next()}}"
+                             alt="Main Product Image" id="mainImage">
+                        <button class="nav-button next-button" id="nextButton"><i class="ti ti-arrow-right"></i>
+                        </button>
+                        <button class="zoom-button" id="zoomButton" title="Zoom Image"><i class="ti ti-resize"></i>
+                        </button>
+                        <button class="download-button" id="downloadButton" title="Download Image"><i
+                                class="ti ti-photo-down"></i></button>
                     </div>
                     <div class="thumbnail-list" id="thumbnailList">
-                        <img th:src="@{'/product/img/' + ${img}}" th:alt="${'Thumbnail ' + (i.index + 1)}" class="active" th:each="img, i:${product.getImageFiles()}">                    </div>
+                        <img th:src="@{'/product/img/' + ${img}}" th:alt="${'Thumbnail ' + (i.index + 1)}"
+                             class="active" th:each="img, i:${product.getImageFiles()}"></div>
+                </div>
+            </div>
+            <div class="text-end"
+                 th:if="${product.isAcceptAdmin != null && !product.isAcceptAdmin && !product.createdBy.equals(user)}">
+                <h5 class="m-0 mt-3"
+                    th:if="${product.createdBy.role == 'ROLE_USER' && !product.createdBy.linkToOrder.isEmpty()}">
+                    Liên hệ với nhà thiết kế <a th:href="${product.createdBy.linkToOrder}">tại đây</a>
+                </h5>
+            </div>
+
+            <div th:if="${product.isAcceptAdmin != null && product.isAcceptAdmin || product.getCreatedBy().role == 'ROLE_ADMIN'}">
+                <div th:if="${product.price != null && product.price > 0}">
+                    <div class="">
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <h5 class="my-auto ms-auto me-2">Chi phí in sản phẩm: <span
+                                    th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')}">0</span>
+                                VNĐ</h5>
+                            <button class="btn btn-primary add-to-cart-btn"
+                                    th:data-product-id="${product.id}"
+                                    th:data-product-name="${product.name}"
+                                    th:data-product-price="${product.price}">
+                                <i class="ti ti-shopping-cart-plus me-1"></i>
+                                Thêm vào giỏ hàng
+                            </button>
+                        </div>
+                        <h5 class="m-0 mt-3 text-end"
+                            th:if="${product.createdBy.role == 'ROLE_USER' && !product.createdBy.linkToOrder.isEmpty() && !product.createdBy.equals(user)}">
+                            Liên hệ với nhà thiết kế <a th:href="${product.createdBy.linkToOrder}">tại đây</a>
+                        </h5>
+                    </div>
+                </div>
+                <div th:if="${product.price == null || product.price == 0}" class="text-end">
+                    <h5 class="m-0 mt-4">Bạn có thể <a th:href="${webInfo.linkToOrder}">click vào đây</a> để liên hệ đặt
+                        in</h5>
+                    <h5 class="m-0 mt-1"
+                        th:if="${product.createdBy.role == 'ROLE_USER' && !product.createdBy.linkToOrder.isEmpty() && !product.createdBy.equals(user)}">
+                        Hoặc liên hệ với chủ sản phẩm <a th:href="${product.createdBy.linkToOrder}">tại đây</a>
+                    </h5>
                 </div>
             </div>
         </div>
@@ -915,12 +1016,14 @@
                     </a>
                 </div>
                 <div class="col">
-                    <a class="action-button" th:href="@{/product:{id}/comments(id=${product.id})}" title="View Comments">
+                    <a class="action-button" th:href="@{/product:{id}/comments(id=${product.id})}"
+                       title="View Comments">
                         <i th:class="${(view == 'comments') ? 'ti ti-message-filled' : 'ti ti-message'}"></i>
                     </a>
                 </div>
                 <div class="col">
-                    <button class="action-button favorite-main-button" th:data-id="${product.id}" title="Add to Favorites">
+                    <button class="action-button favorite-main-button" th:data-id="${product.id}"
+                            title="Add to Favorites">
                         <i th:class="${(user != null && user.getFavoriteProducts().contains(product.id)) ? 'ti ti-heart-filled' : 'ti ti-heart'}"></i>
                     </button>
                 </div>
@@ -941,45 +1044,48 @@
             <th:block th:if="${view == 'files'}">
                 <table class="w-100 file-container">
                     <thead>
-                        <tr>
-                            <th class="fs-4">File</th>
-                            <th class="fs-4">
-                                <button id="downloadAllStlBtn" class="btn btn-link px-0">
-                                    <i class="ti ti-download"></i> Download All Files
-                                </button>
-                            </th>
-                        </tr>
+                    <tr>
+                        <th class="fs-4">File</th>
+                        <th class="fs-4">
+                            <button id="downloadAllStlBtn" class="btn btn-link px-0">
+                                <i class="ti ti-download"></i> Download All Files
+                            </button>
+                        </th>
+                    </tr>
                     </thead>
                     <tbody>
-                        <th:block th:each="file : ${product.getStlFiles().entrySet()}">
-                            <tr>
-                                <td>
-                                    <img th:src="'/product/stl/' + ${file.getKey()} + '_preview.png'" alt="File Image" class="file-image">
-                                </td>
-                                <td class="w-100">
-                                    <div class="file-info">
-                                        <p th:text="'Update: ' + ${#temporals.format(file.getValue().getCreatedAt(), 'dd/MM/yyyy')}">Update Date</p>
+                    <th:block th:each="file : ${product.getStlFiles().entrySet()}">
+                        <tr>
+                            <td>
+                                <img th:src="'/product/stl/' + ${file.getKey()} + '_preview.png'" alt="File Image"
+                                     class="file-image">
+                            </td>
+                            <td class="w-100">
+                                <div class="file-info">
+                                    <p th:text="'Update: ' + ${#temporals.format(file.getValue().getCreatedAt(), 'dd/MM/yyyy')}">
+                                        Update Date</p>
 
-                                        <div class="d-flex justify-content-between">
-                                            <p class="m-0 mt-auto" th:text="'Size: ' + ${file.getValue().getFileSizeFormatted()}">File Size</p>
-                                            <button class="btn btn-primary view-stl-btn ms-auto"
-                                                    th:data-filename="${file.getKey()}"
-                                                    th:data-filesize="${file.getValue().getFileSizeFormatted()}"
-                                                    th:data-filedate="${#temporals.format(file.getValue().getCreatedAt(), 'dd/MM/yyyy HH:mm')}"
-                                                    title="Xem chi tiết">
-                                                <i class="ti ti-eye"></i>
-                                            </button>
+                                    <div class="d-flex justify-content-between">
+                                        <p class="m-0 mt-auto"
+                                           th:text="'Size: ' + ${file.getValue().getFileSizeFormatted()}">File Size</p>
+                                        <button class="btn btn-primary view-stl-btn ms-auto"
+                                                th:data-filename="${file.getKey()}"
+                                                th:data-filesize="${file.getValue().getFileSizeFormatted()}"
+                                                th:data-filedate="${#temporals.format(file.getValue().getCreatedAt(), 'dd/MM/yyyy HH:mm')}"
+                                                title="Xem chi tiết">
+                                            <i class="ti ti-eye"></i>
+                                        </button>
 
-                                            <button class="btn btn-primary download-stl-btn ms-2"
-                                                    th:data-filename="${file.getKey()}"
-                                                    title="Download File">
-                                                <i class="ti ti-download"></i>
-                                            </button>
-                                        </div>
+                                        <button class="btn btn-primary download-stl-btn ms-2"
+                                                th:data-filename="${file.getKey()}"
+                                                title="Download File">
+                                            <i class="ti ti-download"></i>
+                                        </button>
                                     </div>
-                                </td>
-                            </tr>
-                        </th:block>
+                                </div>
+                            </td>
+                        </tr>
+                    </th:block>
                     </tbody>
                 </table>
             </th:block>
@@ -987,21 +1093,26 @@
                 <div class="comment-list">
                     <th:block th:each="comment : ${comments}">
                         <div class="comment-item" th:if="${comment.parentComment == null}">
-                            <img class="comment-avatar" th:src="@{'/img/avatar/' + ${comment.userAccount.getProfileImage() ?: 'user.png'}}" alt="User Avatar">
+                            <img class="comment-avatar"
+                                 th:src="@{'/img/avatar/' + ${comment.userAccount.getProfileImage() ?: 'user.png'}}"
+                                 alt="User Avatar">
                             <div class="comment-content">
                                 <div class="comment-user" th:text="${comment.userAccount.fullName}">Username</div>
                                 <div class="comment-text" th:text="${comment.content}">Comment content</div>
-                                <div class="comment-date" th:text="${#temporals.format(comment.createdAt, 'HH:mm - dd/MM/yyyy')}">Date</div>
+                                <div class="comment-date"
+                                     th:text="${#temporals.format(comment.createdAt, 'HH:mm - dd/MM/yyyy')}">Date
+                                </div>
                                 <div class="comment-actions mt-2" th:if="${user != null}">
                                     <button class="btn btn-sm btn-link text-muted reply-button fs-3"
                                             th:data-comment-id="${comment.id}"
                                             th:data-comment-user="${comment.userAccount.fullName}"
-                                    th:if="${comment.replies.isEmpty()}">
+                                            th:if="${comment.replies.isEmpty()}">
                                         <i class="ti ti-message-circle"></i> Trả lời
                                     </button>
                                 </div>
 
-                                <div class="reply-input-container" th:id="'reply-container-' + ${comment.id}" style="display: none;">
+                                <div class="reply-input-container" th:id="'reply-container-' + ${comment.id}"
+                                     style="display: none;">
                                     <div class="reply-container">
                                         <input type="text" class="comment-input reply-input"
                                                th:id="'reply-input-' + ${comment.id}"
@@ -1025,7 +1136,8 @@
                                     </button>
                                 </div>
 
-                                <div class="replies-container ms-4 mt-2" th:id="'replies-container-' + ${comment.id}" th:if="${!comment.replies.isEmpty()}" style="display: none;">
+                                <div class="replies-container ms-4 mt-2" th:id="'replies-container-' + ${comment.id}"
+                                     th:if="${!comment.replies.isEmpty()}" style="display: none;">
                                     <div class="replies" th:id="'replies-' + ${comment.id}">
                                         <div class="comment-item reply-item" th:each="reply : ${comment.replies}">
                                             <img th:src="@{'/img/avatar/' + ${reply.userAccount.profileImage}}"
@@ -1034,7 +1146,8 @@
                                             <div class="comment-content">
                                                 <div class="comment-user" th:text="${reply.userAccount.fullName}"></div>
                                                 <div class="comment-text" th:text="${reply.content}"></div>
-                                                <div class="comment-date" th:text="${#temporals.format(reply.createdAt, 'HH:mm - dd/MM/yyyy')}"></div>
+                                                <div class="comment-date"
+                                                     th:text="${#temporals.format(reply.createdAt, 'HH:mm - dd/MM/yyyy')}"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -1059,8 +1172,10 @@
                 </div>
                 <div class="comment-container" th:if="${user != null}">
                     <input type="hidden" id="parentCommentId" th:value="${null}">
-                    <input type="text" class="comment-input" id="commentInput" placeholder="Write your comment..." maxlength="500">
-                    <button class="send-button" id="sendButton" title="Send Comment" disabled><i class="ti ti-corner-right-up"></i></button>
+                    <input type="text" class="comment-input" id="commentInput" placeholder="Write your comment..."
+                           maxlength="500">
+                    <button class="send-button" id="sendButton" title="Send Comment" disabled><i
+                            class="ti ti-corner-right-up"></i></button>
                 </div>
 
                 <div th:if="${user == null}">
@@ -1075,13 +1190,16 @@
         <th:block th:if="${!moreProducts.isEmpty()}">
             <div class="con mt-3">
                 <div class="row">
-                    <a th:href="@{/product:{id}(id=${pro.id})}" class="col-xl-3 col-lg-4 col-6 p-1" th:each="pro, p:${moreProducts}">
+                    <a th:href="@{/product:{id}(id=${pro.id})}" class="col-xl-3 col-lg-4 col-6 p-1"
+                       th:each="pro, p:${moreProducts}">
                         <div class="product-card">
                             <div class="product-image">
                                 <img th:src="@{'/product/img/' + ${pro.getImageFiles()[0]}}" alt="Product Image">
                             </div>
-                            <div class="avatar-button" th:data-user-id="${pro.createdBy.userId}" th:data-id="${pro.id}" title="View Profile">
-                                <img th:src="@{'/img/avatar/' + ${pro.getCreatedBy().getProfileImage().isEmpty() ? pro.getCreatedBy().getProfileImage(): 'user.png'}}" alt="Avatar">
+                            <div class="avatar-button" th:data-user-id="${pro.createdBy.userId}" th:data-id="${pro.id}"
+                                 title="View Profile">
+                                <img th:src="@{'/img/avatar/' + ${pro.getCreatedBy().getProfileImage().isEmpty() ? pro.getCreatedBy().getProfileImage(): 'user.png'}}"
+                                     alt="Avatar">
                             </div>
                             <button class="favorite-button" th:data-id="${pro.id}" title="Add to Favorites">
                                 <i th:class="${(user != null && user.getFavoriteProducts().contains(pro.id)) ? 'ti ti-heart-filled' : 'ti ti-heart'}"></i>
@@ -1096,10 +1214,13 @@
         </th:block>
 
         <div class="modal" id="imageModal">
-            <button class="modal-nav-button modal-prev-button" id="modalPrevButton"><i class="ti ti-arrow-left"></i></button>
+            <button class="modal-nav-button modal-prev-button" id="modalPrevButton"><i class="ti ti-arrow-left"></i>
+            </button>
             <img id="modalImage" src="" alt="Zoomed Image">
-            <button class="modal-nav-button modal-next-button" id="modalNextButton"><i class="ti ti-arrow-right"></i></button>
-            <button class="modal-download-button" id="modalDownloadButton" title="Download Image"><i class="ti ti-photo-down"></i></button>
+            <button class="modal-nav-button modal-next-button" id="modalNextButton"><i class="ti ti-arrow-right"></i>
+            </button>
+            <button class="modal-download-button" id="modalDownloadButton" title="Download Image"><i
+                    class="ti ti-photo-down"></i></button>
             <button class="modal-close" id="modalClose"><i class="ti ti-x"></i></button>
         </div>
 
@@ -1180,14 +1301,14 @@
                 const thumbnailHeight = thumbnail.offsetHeight;
                 const containerHeight = thumbnailList.clientHeight;
                 const scrollPosition = thumbnailTop - (containerHeight - thumbnailHeight) / 2;
-                thumbnailList.scrollTo({ top: scrollPosition, behavior: 'smooth' });
+                thumbnailList.scrollTo({top: scrollPosition, behavior: 'smooth'});
             } else {
                 // Horizontal layout: scroll horizontally
                 const thumbnailLeft = thumbnail.offsetLeft;
                 const thumbnailWidth = thumbnail.offsetWidth;
                 const containerWidth = thumbnailList.clientWidth;
                 const scrollPosition = thumbnailLeft - (containerWidth - thumbnailWidth) / 2;
-                thumbnailList.scrollTo({ left: scrollPosition, behavior: 'smooth' });
+                thumbnailList.scrollTo({left: scrollPosition, behavior: 'smooth'});
             }
         }
 
@@ -1227,7 +1348,7 @@
                 modalImage.alt = thumbnails[index].alt;
                 currentIndex = index;
                 scrollThumbnailIntoView(index); // Scroll to the selected thumbnail
-                mainImage.addEventListener('load', syncThumbnailListHeight, { once: true });
+                mainImage.addEventListener('load', syncThumbnailListHeight, {once: true});
             }
         }
 
@@ -1365,8 +1486,8 @@
 
     <script type="module" th:if="${view == 'files'}">
         import * as THREE from 'three';
-        import { STLLoader } from 'three/addons/loaders/STLLoader.js';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import {STLLoader} from 'three/addons/loaders/STLLoader.js';
+        import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
         let stlScene, stlCamera, stlRenderer, stlControls, stlMesh;
         let isWireframe = false;
@@ -1448,7 +1569,7 @@
             stlCamera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
 
             // Renderer setup
-            stlRenderer = new THREE.WebGLRenderer({ antialias: true });
+            stlRenderer = new THREE.WebGLRenderer({antialias: true});
             stlRenderer.setSize(canvasWidth, canvasHeight);
             stlRenderer.shadowMap.enabled = true;
             stlRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -1725,7 +1846,6 @@
         };
 
 
-
         commentInput.addEventListener('input', () => {
             sendButton.disabled = commentInput.value.trim() === '';
         });
@@ -1990,6 +2110,145 @@
                     sendButton.disabled = true;
                 });
         }
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            // Xử lý click thêm vào giỏ hàng
+            $('.add-to-cart-btn').click(function () {
+                const button = $(this);
+                const productId = button.data('product-id');
+                const productName = button.data('product-name');
+                const productPrice = button.data('product-price');
+
+                // Disable button và hiển thị loading
+                const originalHtml = button.html();
+                button.prop('disabled', true).html('<i class="ti ti-loader-2 spin"></i> Đang thêm...');
+
+                $.ajax({
+                    url: '/api/add-to-cart',
+                    type: 'POST',
+                    data: {
+                        productId: productId,
+                        quantity: 1
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            // Hiển thị thông báo thành công
+                            showCartNotification('success', response.message, {
+                                name: productName,
+                                price: productPrice
+                            });
+
+                            // Cập nhật số lượng giỏ hàng trên header (nếu có)
+                            updateCartBadge(response.cartItemCount);
+
+                            // Đổi button thành "Đã thêm vào giỏ"
+                            button.removeClass('btn-primary').addClass('btn-success')
+                                .html('<i class="ti ti-check me-1"></i> Đã thêm vào giỏ hàng');
+
+                            // Sau 3 giây thì đổi lại
+                            setTimeout(() => {
+                                button.removeClass('btn-success').addClass('btn-primary')
+                                    .prop('disabled', false).html(originalHtml);
+                            }, 3000);
+
+                        } else {
+                            if (response.needLogin) {
+                                showLoginModal(response.message);
+                            } else {
+                                showCartNotification('error', response.message);
+                            }
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        let errorMessage = 'Lỗi khi thêm vào giỏ hàng';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        showCartNotification('error', errorMessage);
+                    },
+                    complete: function () {
+                        // Restore button nếu không thành công
+                        if (!button.hasClass('btn-success')) {
+                            button.prop('disabled', false).html(originalHtml);
+                        }
+                    }
+                });
+            });
+
+            // Hàm hiển thị thông báo giỏ hàng
+            function showCartNotification(type, message, productInfo = null) {
+                let notificationHtml = '';
+
+                if (type === 'success' && productInfo) {
+                    notificationHtml = `
+                <div class="alert alert-success alert-dismissible fade show cart-notification"
+                     style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 350px; max-width: 400px;">
+                    <div class="d-flex align-items-center">
+                        <i class="ti ti-shopping-cart-check fs-4 me-2"></i>
+                        <div class="flex-grow-1">
+                            <strong>Đã thêm vào giỏ hàng!</strong><br>
+                            <small>${productInfo.name}</small><br>
+                            <small class="text-muted">${formatVND(productInfo.price)}</small>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <a href="/user/cart" class="btn btn-sm btn-primary me-2">
+                            <i class="ti ti-shopping-cart me-1"></i>Xem giỏ hàng
+                        </a>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                </div>
+            `;
+                } else {
+                    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+                    const icon = type === 'success' ? 'ti-check' : 'ti-x';
+
+                    notificationHtml = `
+                <div class="alert ${alertClass} alert-dismissible fade show"
+                     style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                    <i class="ti ${icon} me-2"></i>${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+                }
+
+                // Thêm vào body
+                $('body').append(notificationHtml);
+
+                // Tự động ẩn sau 5 giây
+                setTimeout(function () {
+                    $('.cart-notification, .alert').fadeOut(function () {
+                        $(this).remove();
+                    });
+                }, 5000);
+            }
+
+            // Hàm format tiền
+            function formatVND(price) {
+                if (price === null || price === undefined || price === 0) {
+                    return 'Miễn phí';
+                }
+                return new Intl.NumberFormat('vi-VN').format(price) + ' VNĐ';
+            }
+
+            // Cập nhật badge số lượng giỏ hàng
+            function updateCartBadge(count) {
+
+                const paragraphElement = document.getElementById("cart-count");
+                if (paragraphElement) {
+                    paragraphElement.textContent = count;
+                }
+            }
+
+            // Hiển thị modal đăng nhập
+            function showLoginModal(message) {
+                if (confirm(message + '\nBạn có muốn đăng nhập ngay không?')) {
+                    window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+                }
+            }
+        });
     </script>
 </section>
 </body>

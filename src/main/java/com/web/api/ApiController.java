@@ -68,6 +68,9 @@ public class ApiController {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private CartService cartService;
+
     @PostMapping("/addContact")
     public ResponseEntity<String> addContact(
             @RequestParam("name") String name,
@@ -97,14 +100,11 @@ public class ApiController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
 
-        User user = userService.findByEmail(email);
+        UserAccount currentUser = userService.getUserAccountByEmail(email);
 
-        if (user == null) {
+        if (currentUser == null) {
             return ResponseEntity.ok("User not found");
         }
-
-        UserAccount currentUser = user.getUserAccount();
-
 
         if (currentUser.getFavoriteProducts().contains(productId)) {
             currentUser.getFavoriteProducts().remove(productId);
@@ -246,25 +246,25 @@ public class ApiController {
             long unreadCount = notificationService.getUnreadCount(user);
 
             List<Map<String, Object>> notificationList = notifications.stream()
-                .map(n -> {
-                    Map<String, Object> notif = new HashMap<>();
-                    notif.put("id", n.getId());
-                    notif.put("type", n.getType());
-                    notif.put("content", n.getContent());
-                    notif.put("productId", n.getProductId());
-                    notif.put("createdAt", n.getCreatedAt().toString());
-                    notif.put("notificationKey", n.getNotificationKey());
+                    .map(n -> {
+                        Map<String, Object> notif = new HashMap<>();
+                        notif.put("id", n.getId());
+                        notif.put("type", n.getType());
+                        notif.put("content", n.getContent());
+                        notif.put("productId", n.getProductId());
+                        notif.put("createdAt", n.getCreatedAt().toString());
+                        notif.put("notificationKey", n.getNotificationKey());
 
-                    Map<String, Object> userInfo = new HashMap<>();
-                    userInfo.put("userId", n.getSenderId());
-                    userInfo.put("fullName",  n.getSenderName());
-                    userInfo.put("profileImage", n.getSenderAvatar());
-                    notif.put("user", userInfo);
+                        Map<String, Object> userInfo = new HashMap<>();
+                        userInfo.put("userId", n.getSenderId());
+                        userInfo.put("fullName", n.getSenderName());
+                        userInfo.put("profileImage", n.getSenderAvatar());
+                        notif.put("user", userInfo);
 
-                    notif.put("isRead", n.getIsRead());
-                    return notif;
-                })
-                .collect(Collectors.toList());
+                        notif.put("isRead", n.getIsRead());
+                        return notif;
+                    })
+                    .collect(Collectors.toList());
 
             Map<String, Object> response = new HashMap<>();
             response.put("notifications", notificationList);
@@ -319,7 +319,7 @@ public class ApiController {
 
         try {
             // Find user by username (assuming you have a userService or userRepository)
-            return userService.findByEmail(email).getUserAccount();
+            return userService.getUserAccountByEmail(email);
         } catch (Exception e) {
             // Log the error if needed
             return null;
@@ -540,6 +540,7 @@ public class ApiController {
                                          @RequestParam(value = "price", required = false) Double price,
                                          @RequestParam("status") Boolean status,
                                          @RequestParam("description") String description,
+                                         @RequestParam("isAcceptAdmin") Boolean isAcceptAdmin,
                                          @RequestParam("images") String images,
                                          @RequestParam("stlFiles") String stlFiles,
                                          @RequestParam("tags") String tagsJson,
@@ -570,6 +571,7 @@ public class ApiController {
 
             product.setDescription(final_content);
             product.setTags(tags);
+            product.setIsAcceptAdmin(isAcceptAdmin);
 
             LocalDateTime createdAt = LocalDateTime.now();
 
@@ -578,7 +580,7 @@ public class ApiController {
             String sourcePathImg = path + "tmp" + File.separator + "img" + File.separator;
             String targetPathImg = path + "product" + File.separator + "img" + File.separator;
 
-            for (String img: imageList) {
+            for (String img : imageList) {
                 Files.move(Paths.get(sourcePathImg + img), Paths.get(targetPathImg + img), StandardCopyOption.REPLACE_EXISTING);
                 product.getImageFiles().add(img);
             }
@@ -629,12 +631,13 @@ public class ApiController {
                                            @RequestParam(value = "price", required = false) Double price,
                                            @RequestParam("status") Boolean status,
                                            @RequestParam("description") String description,
+                                           @RequestParam("isAcceptAdmin") Boolean isAcceptAdmin,
                                            @RequestParam("images") String images,
                                            @RequestParam("stlFiles") String stlFiles,
                                            @RequestParam("deleteImages") String deleteImages,
                                            @RequestParam("deleteStlFiles") String deleteStlFiles,
                                            @RequestParam("tags") String tagsJson,
-                                           @RequestParam("deleteTags") String deleteTags,
+//                                           @RequestParam("deleteTags") String deleteTags,
                                            HttpSession session) {
 
         try {
@@ -694,7 +697,7 @@ public class ApiController {
 
             }
 
-            for (String img: imageList) {
+            for (String img : imageList) {
                 Files.move(Paths.get(sourcePathImg + img), Paths.get(targetPathImg + img), StandardCopyOption.REPLACE_EXISTING);
                 product.getImageFiles().add(img);
             }
@@ -738,6 +741,7 @@ public class ApiController {
             String final_content = moveImagesFromTemp(description);
 
             product.setDescription(final_content);
+            product.setIsAcceptAdmin(isAcceptAdmin);
 
             product.setTags(tags);
             product.setCreatedAt(createdAt);
@@ -888,4 +892,80 @@ public class ApiController {
 
         return images;
     }
+
+    @PostMapping("/add-to-cart")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> addToCart(@RequestParam Long productId,
+                                                         @RequestParam(defaultValue = "1") Integer quantity) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Lấy user hiện tại
+            UserAccount currentUser = getCurrentUser();
+            if (currentUser == null) {
+                response.put("success", false);
+                response.put("message", "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng");
+                response.put("requireLogin", true);
+                return ResponseEntity.ok(response);
+            }
+
+            // Kiểm tra sản phẩm tồn tại
+            Product product = productService.getProductById(productId);
+            if (product == null) {
+                response.put("success", false);
+                response.put("message", "Sản phẩm không tồn tại");
+                return ResponseEntity.ok(response);
+            }
+
+            // Kiểm tra không thể mua sản phẩm của chính mình
+            if (product.getCreatedBy().getUserId().equals(currentUser.getUserId())) {
+                response.put("success", false);
+                response.put("message", "Bạn không thể mua sản phẩm của chính mình");
+                return ResponseEntity.ok(response);
+            }
+
+            // Kiểm tra sản phẩm có giá (chỉ admin mới có sản phẩm có giá)
+            if (product.getPrice() == null || product.getPrice() <= 0) {
+                response.put("success", false);
+                response.put("message", "Sản phẩm này không có giá bán");
+                return ResponseEntity.ok(response);
+            }
+
+            boolean added = cartService.addProductToCart(currentUser.getUserId(), product.getId());
+
+            if (added) {
+                response.put("success", true);
+                response.put("message", "Đã thêm sản phẩm vào giỏ hàng");
+                response.put("cartItemCount", cartService.countCartByUserId(currentUser.getUserId()));
+                response.put("productInfo", Map.of(
+                        "name", product.getName(),
+                        "price", product.getPrice(),
+                        "quantity", quantity
+                ));
+            } else {
+                response.put("success", false);
+                response.put("message", "Không thể thêm sản phẩm vào giỏ hàng");
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Lỗi hệ thống: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+//    private int getCartItemCount(UserAccount user) {
+//        try {
+//            if (user.getCartItems() == null) {
+//                return 0;
+//            }
+//            return user.getCartItems().size();
+//
+//        } catch (Exception e) {
+//            return 0;
+//        }
+//    }
+
 }

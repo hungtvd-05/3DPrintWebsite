@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{base::layout(~{::section})}">>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<section>
+    <style>
+        .con {
+            max-width: 1080px;
+            padding: 20px;
+            background-color: White;
+            margin: 0 auto;
+            border-radius: 16px;
+            border: 1px solid black;
+        }
+        .address-item {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+        }
+        .address-item.default {
+            border-color: #007bff;
+            background-color: #e7f3ff;
+        }
+    </style>
+    <div style="padding: 16px;">
+        <div class="con">
+            <h4 class="text-center my-3">Địa chỉ của bạn</h4>
+
+            <th:block th:if="${!addresses.isEmpty()}">
+                <div th:each="address : ${addresses}" class="address-item" th:classappend="${address.isDefault} ? 'default' : ''">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="form-check flex-grow-1">
+                            <input class="form-check-input address-radio"
+                                   type="radio"
+                                   name="defaultAddress"
+                                   th:id="'address-' + ${address.id}"
+                                   th:value="${address.id}"
+                                   th:checked="${address.isDefault}"
+                                   th:data-address-id="${address.id}">
+                            <label class="form-check-label" th:for="'address-' + ${address.id}">
+                                <h6 class="mb-1" th:text="${address.detailAddress}"></h6>
+                                <small class="text-muted" th:text="${address.wardFullName}"></small>
+                                <span th:if="${address.isDefault}" class="badge bg-primary ms-2">Mặc định</span>
+                            </label>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button"
+                                    class="btn btn-outline-primary btn-sm edit-address-btn"
+                                    th:data-address-id="${address.id}"
+                                    title="Chỉnh sửa địa chỉ">
+                                <i class="ti ti-edit"></i> Sửa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </th:block>
+
+            <th:block th:if="${addresses.isEmpty()}">
+                <div class="text-center">
+                    <p>Bạn chưa có địa chỉ nào</p>
+                </div>
+            </th:block>
+
+            <div class="text-center mt-3">
+                <button type="button" class="btn btn-success" onclick="location.href='/user/add-address'">
+                    <i class="ti ti-plus"></i> Thêm địa chỉ mới
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Xử lý thay đổi địa chỉ mặc định
+            document.querySelectorAll('.address-radio').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.checked) {
+                        const addressId = this.getAttribute('data-address-id');
+                        updateDefaultAddress(addressId);
+                    }
+                });
+            });
+
+            // Xử lý nút edit
+            document.querySelectorAll('.edit-address-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const addressId = this.getAttribute('data-address-id');
+                    editAddress(addressId);
+                });
+            });
+        });
+
+        // Hàm cập nhật địa chỉ mặc định
+        function updateDefaultAddress(addressId) {
+            fetch('/user/update-default-address', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    addressId: addressId
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Cập nhật UI
+                        updateAddressUI(addressId);
+                        console.log('Địa chỉ mặc định đã được cập nhật');
+                    } else {
+                        alert('Không thể cập nhật địa chỉ mặc định. Vui lòng thử lại!');
+                        // Reload để reset radio buttons
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra. Vui lòng thử lại!');
+                    location.reload();
+                });
+        }
+
+        // Hàm cập nhật UI sau khi thay đổi địa chỉ mặc định
+        function updateAddressUI(newDefaultId) {
+            // Remove default styling from all items
+            document.querySelectorAll('.address-item').forEach(item => {
+                item.classList.remove('default');
+            });
+
+            // Remove all default badges
+            document.querySelectorAll('.badge.bg-primary').forEach(badge => {
+                badge.remove();
+            });
+
+            // Add default styling to new default address
+            const newDefaultRadio = document.querySelector(`input[data-address-id="${newDefaultId}"]`);
+            if (newDefaultRadio) {
+                const addressItem = newDefaultRadio.closest('.address-item');
+                addressItem.classList.add('default');
+
+                // Add default badge
+                const label = newDefaultRadio.nextElementSibling;
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-primary ms-2';
+                badge.textContent = 'Mặc định';
+                label.appendChild(badge);
+            }
+        }
+
+        // Hàm chuyển tới trang edit
+        function editAddress(addressId) {
+            window.location.href = `/user/edit-address:${addressId}`;
+        }
+    </script>
+</section>
+</body>
+</html>

@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{base::layout(~{::section})}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="Description" content="Enter your description here"/>
+
+    <title>Title</title>
+</head>
+<body>
+<section>
+    <style>
+        .con {
+            max-width: 1080px;
+            padding: 20px;
+            background-color: White;
+            margin: 0 auto;
+            border-radius: 16px;
+            border: 1px solid black;
+        }
+
+        .address-input-wrapper {
+            position: relative;
+        }
+
+        .address-suggestion-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .address-suggestion-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .address-suggestion-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .address-suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .selected-address-info {
+            margin-top: 8px;
+            padding: 8px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+    </style>
+
+    <div style="padding: 16px">
+        <form action="/user/update-address" method="post">
+            <input type="hidden" name="userId" th:value="${user.userId}">
+            <input type="hidden" name="id" th:value="${address.id}">
+            <div class="con">
+                <div class="mb-3">
+                    <label for="fullName" class="form-label">Tên</label>
+                    <input type="text" name="fullName" id="fullName" class="form-control"
+                           placeholder="Nhập tên của bạn" th:value="${address.fullName}">
+                </div>
+                <div class="row">
+                    <div class="col-6 col-sm-8 col-md-9 col-lg-10 mb-3">
+                        <label for="phoneNumber" class="form-label">Số điện thoại</label>
+                        <input type="tel" name="phone" id="phoneNumber" class="form-control"
+                               placeholder="Nhập số điện thoại" th:value="${address.phone}">
+                    </div>
+                    <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-3">
+                        <label for="active" class="form-label">Địa chỉ mặc định</label>
+                        <div class="d-flex mt-2">
+                            <div class="form-check" style="margin-right: 20px">
+                                <input class="form-check-input" type="radio" name="isDefault" id="active"
+                                       value="true" th:checked="${address.isDefault}">
+                                <label class="form-check-label" for="active">
+                                    OK
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="isDefault" id="inactive"
+                                       value="false" th:checked="${!address.isDefault}">
+                                <label class="form-check-label" for="inactive">
+                                    Không
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <h5 class="mb-3">Địa chỉ</h5>
+
+                    <!-- Province and Ward Selection -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="province-input" class="form-label">Tỉnh/Thành phố</label>
+                            <div class="address-input-wrapper">
+                                <input type="text"
+                                       class="form-control"
+                                       id="province-input"
+                                       placeholder="Tìm kiếm tỉnh/thành phố..."
+                                       autocomplete="off" th:value="${address.province}">
+                                <div id="province-suggestions" class="address-suggestion-list"></div>
+                                <input type="hidden" id="province-code" name="provinceCode"
+                                       th:value="${address.provinceCode}">
+                                <input type="hidden" id="province-name" name="province"
+                                       th:value="${address.province}">
+                            </div>
+                            <div id="selected-province-info" class="selected-address-info"
+                                 style="display: none;"></div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="ward-input" class="form-label">Phường/Xã</label>
+                            <div class="address-input-wrapper">
+                                <input type="text"
+                                       class="form-control"
+                                       id="ward-input"
+                                       placeholder="Tìm kiếm phường/xã..."
+                                       autocomplete="off"
+                                       disabled th:value="${address.ward}">
+                                <div id="ward-suggestions" class="address-suggestion-list"></div>
+                                <input type="hidden" id="ward-code" name="wardCode"
+                                       th:value="${address.wardCode}">
+                                <input type="hidden" id="ward-name" name="ward" th:value="${address.ward}">
+                                <input type="hidden" id="ward-fullName" name="wardFullName"
+                                       th:value="${address.wardFullName}">
+                            </div>
+                            <div id="selected-ward-info" class="selected-address-info"
+                                 style="display: none;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Detail Address -->
+                    <div class="row">
+                        <div class="col-12">
+                            <label for="detailAddress" class="form-label">Địa chỉ chi tiết</label>
+                            <input type="text" class="form-control" id="detailAddress"
+                                   name="detailAddress"
+                                   placeholder="Số nhà, tên đường..." th:value="${address.detailAddress}">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-3 pe-0">
+                        <a onclick="history.back()" class="btn btn-success w-100"><i class="ti ti-logout-2"></i></a>
+                    </div>
+                    <div class="col-9">
+                        <button class="btn btn-primary w-100">Lưu địa chỉ</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Address data storage
+        let addressData = null;
+        let currentProvinceWards = [];
+
+        async function loadAddressData() {
+            try {
+                const response = await fetch('/data/tree.json');
+                const provinces = await response.json();
+
+                provinces.sort((a, b) => Number(a.code) - Number(b.code));
+                addressData = provinces;
+
+                console.log('Address data loaded successfully');
+            } catch (error) {
+                console.error('Error loading address data:', error);
+                showError('Không thể tải dữ liệu địa chỉ');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadAddressData().then(() => {
+                // Kiểm tra an toàn dữ liệu từ Thymeleaf
+                const provinceCode = document.getElementById('province-code').value;
+                const wardCode = document.getElementById('ward-code').value;
+
+                // Chỉ gọi setSelectedAddress nếu có provinceCode
+                if (provinceCode && provinceCode.trim() !== '') {
+                    setSelectedAddress(provinceCode.trim(), wardCode ? wardCode.trim() : '');
+                }
+            }).catch(error => {
+                console.error('Failed to load address data:', error);
+            });
+        });
+
+        // Province suggestion functionality
+        const provinceInput = document.getElementById('province-input');
+        const provinceSuggestions = document.getElementById('province-suggestions');
+        const provinceCodeInput = document.getElementById('province-code');
+        const provinceNameInput = document.getElementById('province-name');
+        const selectedProvinceInfo = document.getElementById('selected-province-info');
+
+        // Ward suggestion functionality
+        const wardInput = document.getElementById('ward-input');
+        const wardSuggestions = document.getElementById('ward-suggestions');
+        const wardCodeInput = document.getElementById('ward-code');
+        const wardNameInput = document.getElementById('ward-name');
+        const wardFullNameInput = document.getElementById('ward-fullName');
+        const selectedWardInfo = document.getElementById('selected-ward-info');
+
+        // Province input events
+        provinceInput.addEventListener('input', function () {
+            const value = this.value.trim().toLowerCase();
+            if (!value) {
+                hideProvinceSuggestions();
+                resetWardSelection();
+                return;
+            }
+            updateProvinceSuggestions(value);
+        });
+
+        provinceInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                hideProvinceSuggestions();
+            }
+        });
+
+        // Ward input events
+        wardInput.addEventListener('input', function () {
+            const value = this.value.trim().toLowerCase();
+            if (!value) {
+                hideWardSuggestions();
+                return;
+            }
+            updateWardSuggestions(value);
+        });
+
+        wardInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                hideWardSuggestions();
+            }
+        });
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('#province-input') && !e.target.closest('#province-suggestions')) {
+                hideProvinceSuggestions();
+            }
+            if (!e.target.closest('#ward-input') && !e.target.closest('#ward-suggestions')) {
+                hideWardSuggestions();
+            }
+        });
+
+        function updateProvinceSuggestions(value) {
+            if (!addressData) return;
+
+            const matches = addressData.filter(province =>
+                province.name.toLowerCase().includes(value) ||
+                province.fullName.toLowerCase().includes(value)
+            );
+
+            if (matches.length > 0) {
+                showProvinceSuggestions(matches, value);
+            } else {
+                hideProvinceSuggestions();
+            }
+        }
+
+        function showProvinceSuggestions(matches, inputValue) {
+            provinceSuggestions.innerHTML = '';
+
+            matches.forEach(province => {
+                const div = document.createElement('div');
+                div.className = 'address-suggestion-item';
+
+                // Highlight matching text
+                const matchIndex = province.name.toLowerCase().indexOf(inputValue.toLowerCase());
+                let displayText = province.name;
+                if (matchIndex !== -1) {
+                    const beforeMatch = province.name.slice(0, matchIndex);
+                    const match = province.name.slice(matchIndex, matchIndex + inputValue.length);
+                    const afterMatch = province.name.slice(matchIndex + inputValue.length);
+                    displayText = `${beforeMatch}<strong>${match}</strong>${afterMatch}`;
+                }
+
+                div.innerHTML = displayText;
+                div.addEventListener('click', () => selectProvince(province));
+                provinceSuggestions.appendChild(div);
+            });
+
+            provinceSuggestions.style.display = 'block';
+        }
+
+        function hideProvinceSuggestions() {
+            provinceSuggestions.style.display = 'none';
+        }
+
+        function selectProvince(province) {
+            provinceInput.value = province.name;
+            provinceCodeInput.value = province.code;
+            provinceNameInput.value = province.name;
+
+            selectedProvinceInfo.innerHTML = `<strong>Đã chọn:</strong> ${province.fullName}`;
+            selectedProvinceInfo.style.display = 'block';
+
+            hideProvinceSuggestions();
+
+            // Debug: Kiểm tra cấu trúc province object
+            console.log('Selected province:', province);
+            console.log('Province wards:', province.wards);
+
+            // Load wards for selected province
+            loadWardsForProvince(province);
+
+            // Enable ward input
+            wardInput.disabled = false;
+            wardInput.placeholder = 'Tìm kiếm phường/xã...';
+        }
+
+        function loadWardsForProvince(province) {
+            console.log('loadWardsForProvince called with:', province);
+
+            // Kiểm tra các tên thuộc tính khác nhau có thể có trong dữ liệu
+            const rawWards = province.wards || province.districts || province.children || [];
+            console.log('Raw wards data:', rawWards);
+
+            if (rawWards.length > 0) {
+                rawWards.sort((a, b) => Number(a.code) - Number(b.code));
+                console.log('Sorted wards:', rawWards);
+
+                // Gán sau khi sort
+                currentProvinceWards = rawWards;
+            } else {
+                console.log('No wards found for province:', province.name);
+                currentProvinceWards = [];
+            }
+
+            // Reset ward selection NHƯNG KHÔNG reset currentProvinceWards
+            wardInput.value = '';
+            wardInput.disabled = false; // Enable ngay lập tức
+            wardInput.placeholder = 'Tìm kiếm phường/xã...';
+            wardCodeInput.value = '';
+            wardNameInput.value = '';
+            wardFullNameInput.value = '';
+            selectedWardInfo.style.display = 'none';
+            hideWardSuggestions();
+        }
+
+        function resetWardSelection() {
+            wardInput.value = '';
+            wardInput.disabled = true;
+            wardInput.placeholder = 'Chọn tỉnh/thành phố trước';
+            wardCodeInput.value = '';
+            wardNameInput.value = '';
+            wardFullNameInput.value = '';
+            selectedWardInfo.style.display = 'none';
+            hideWardSuggestions();
+        }
+
+        function updateWardSuggestions(value) {
+            console.log('updateWardSuggestions called with:', value);
+            console.log('currentProvinceWards length:', currentProvinceWards.length);
+
+            if (currentProvinceWards.length === 0) {
+                console.log('No wards available');
+                return;
+            }
+
+            const matches = currentProvinceWards.filter(ward =>
+                ward.name.toLowerCase().includes(value) ||
+                ward.fullName.toLowerCase().includes(value)
+            );
+
+            console.log('Found matches:', matches.length);
+
+            if (matches.length > 0) {
+                showWardSuggestions(matches, value);
+            } else {
+                hideWardSuggestions();
+            }
+        }
+
+        function showWardSuggestions(matches, inputValue) {
+            console.log('showWardSuggestions called with matches:', matches.length);
+
+            wardSuggestions.innerHTML = '';
+
+            matches.forEach(ward => {
+                const div = document.createElement('div');
+                div.className = 'address-suggestion-item';
+
+                // Highlight matching text
+                const matchIndex = ward.name.toLowerCase().indexOf(inputValue.toLowerCase());
+                let displayText = ward.name;
+                if (matchIndex !== -1) {
+                    const beforeMatch = ward.name.slice(0, matchIndex);
+                    const match = ward.name.slice(matchIndex, matchIndex + inputValue.length);
+                    const afterMatch = ward.name.slice(matchIndex + inputValue.length);
+                    displayText = `${beforeMatch}<strong>${match}</strong>${afterMatch}`;
+                }
+
+                div.innerHTML = `${displayText}`;
+                div.addEventListener('click', () => selectWard(ward));
+                wardSuggestions.appendChild(div);
+            });
+
+            wardSuggestions.style.display = 'block';
+            console.log('Ward suggestions displayed');
+        }
+
+        function hideWardSuggestions() {
+            wardSuggestions.style.display = 'none';
+        }
+
+        function selectWard(ward) {
+            wardInput.value = ward.name;
+            wardCodeInput.value = ward.code;
+            wardNameInput.value = ward.name;
+            wardFullNameInput.value = ward.fullName;
+
+            selectedWardInfo.innerHTML = `<strong>Đã chọn:</strong> ${ward.fullName}`;
+            selectedWardInfo.style.display = 'block';
+
+            hideWardSuggestions();
+        }
+
+        function showError(message) {
+            console.error(message);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            loadAddressData();
+        });
+
+        // Function to set selected address (for pre-filling form)
+        function setSelectedAddress(provinceCode, wardCode) {
+            if (!addressData) {
+                setTimeout(() => setSelectedAddress(provinceCode, wardCode), 100);
+                return;
+            }
+
+            if (provinceCode) {
+                const province = addressData.find(p => p.code === provinceCode);
+                if (province) {
+                    selectProvince(province);
+
+                    if (wardCode) {
+
+                        console.log("Setting ward code:", wardCode);
+                        console.log(currentProvinceWards);
+
+                        setTimeout(() => {
+                            const ward = currentProvinceWards.find(w => w.code === wardCode);
+
+                            if (ward) {
+                                console.log("Setting ward:", ward);
+                                selectWard(ward);
+                            }
+                        }, 50);
+                    }
+                }
+            }
+        }
+    </script>
+</section>
+</body>
+</html>

@@ -64,7 +64,7 @@ public class AdminController {
 
         if (p != null) {
             String email = p.getName();
-            UserAccount user = userService.findByEmail(email).getUserAccount();
+            UserAccount user = userService.getUserAccountByEmail(email);
             m.addAttribute("user", user);
             m.addAttribute("countCart", 0);
         }
@@ -377,6 +377,48 @@ public class AdminController {
         return ResponseEntity.ok("no change");
     }
 
+    @PostMapping("/update-product-cost")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateProductCost(@RequestParam Long productId,
+                                                                 @RequestParam Double cost) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            Product product = productService.getProductById(productId);
+
+            if (product == null) {
+                response.put("success", false);
+                response.put("message", "Không tìm thấy sản phẩm");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            if (cost < 0) {
+                response.put("success", false);
+                response.put("message", "Chi phí không được âm");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            product.setPrice(cost);
+            Product updatedProduct = productService.updateProduct(product);
+
+            if (updatedProduct != null) {
+                response.put("success", true);
+                response.put("message", "Cập nhật chi phí thành công");
+                response.put("newCost", cost);
+            } else {
+                response.put("success", false);
+                response.put("message", "Lỗi khi cập nhật chi phí");
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Lỗi server: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
     private void sendNotificationToProductOwner(Product product, String action) {
         try {
             UserAccount productOwner = product.getCreatedBy();
@@ -455,7 +497,7 @@ public class AdminController {
 
     @GetMapping("/profile")
     public String profile(Model m, Principal p) {
-        UserAccount user = userService.findByEmail(p.getName()).getUserAccount();
+        UserAccount user = userService.getUserAccountByEmail(p.getName());
         m.addAttribute("user", user);
         return "admin/profile";
     }
@@ -469,7 +511,7 @@ public class AdminController {
                                 HttpSession session) throws IOException {
 
 
-        UserAccount user = userService.findByEmail(p.getName()).getUserAccount();
+        UserAccount user = userService.getUserAccountByEmail(p.getName());
 
         if (user == null || !Objects.equals(user.getUserId(), id)) {
             return "redirect:/admin/profile";
@@ -519,7 +561,7 @@ public class AdminController {
                                     HttpSession session) throws IOException {
 
 
-        UserAccount user = userService.findByEmail(p.getName()).getUserAccount();
+        UserAccount user = userService.getUserAccountByEmail(p.getName());
 
         if (user == null || !Objects.equals(user.getUserId(), id)) {
             return "redirect:/admin/profile";

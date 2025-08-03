@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{base::layout(~{::section})}">>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+</head>
+<body>
+<section>
+
+    <style>
+        .quantity-input-wrapper {
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .quantity-btn {
+            background: #f8f9fa;
+            border: none;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            color: #495057;
+            transition: background-color 0.2s;
+        }
+
+        .quantity-btn:hover {
+            background: #e9ecef;
+        }
+
+        .quantity-btn:active {
+            background: #dee2e6;
+        }
+
+        .quantity-btn:disabled {
+            background: #f8f9fa;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .quantity-input {
+            border: none;
+            outline: none;
+            width: 60px;
+            height: 30px;
+            text-align: center;
+            font-size: 14px;
+            background: white;
+            -moz-appearance: textfield; /* Firefox */
+        }
+
+        /* Hide default number input arrows */
+        .quantity-input::-webkit-outer-spin-button,
+        .quantity-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .product-name {
+            display: -webkit-box;
+            -webkit-line-clamp: 2; /* Giới hạn tối đa 2 dòng */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis; /* Thêm dấu ba chấm (...) khi văn bản bị cắt */
+            max-height: 3em; /* Ước lượng chiều cao tối đa cho 2 dòng, tùy thuộc vào font-size */
+            line-height: 1.5em; /* Điều chỉnh theo font-size của bạn */
+        }
+    </style>
+
+    <div class="container-xl">
+        <h4 class="text-center my-3">Giỏ hàng</h4>
+
+        <th:block th:if="${!cartItems.isEmpty()}">
+            <div class="text-dark" th:each="cart : ${cartItems}">
+                <a th:href="'/product:' + ${cart.getProductId()}"><h6 class="product-name" th:text="${cart.getProductName()}"></h6></a>
+                <div class="d-flex justify-content-between">
+                    <span class="my-auto">
+                            <i class="ti ti-trash-filled text-danger fs-6" th:data-id="${cart.getCartId()}"></i>
+                    </span>
+                    <div class="d-flex">
+                        <h5 class="my-auto me-3"><span
+                                th:text="${#numbers.formatDecimal(cart.price, 0, 'COMMA', 0, 'POINT')}">0</span>
+                            VNĐ
+                        </h5>
+                        <div class="quantity-input-wrapper">
+                            <button type="button" class="quantity-btn decrease-btn" th:data-id="${cart.getCartId()}">
+                                −
+                            </button>
+                            <input type="number"
+                                   class="quantity-input"
+                                   th:data-id="${cart.getCartId()}"
+                                   th:value="${cart.getQuantity()}"
+                                   min="1"
+                                   max="99">
+                            <button type="button" class="quantity-btn increase-btn" th:data-id="${cart.getCartId()}">
+                                +
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+            </div>
+            <div class="d-flex justify-content-between mb-3">
+                <h5 class="my-auto">Tổng: <span id="cart-total"
+                                                       class="total-price">0</span>
+                    VNĐ
+                </h5>
+                <a class="btn btn-primary" th:if="${!cartItems.isEmpty()}" href="/user/checkout">Thanh toán</a>
+            </div>
+        </th:block>
+    </div>
+
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function () {
+            updateCartTotal();
+            document.querySelectorAll('.quantity-input').forEach(input => {
+                input.addEventListener('input', function () {
+                    const cartId = this.getAttribute('data-id');
+                    let newValue = parseInt(this.value);
+                    const minValue = parseInt(this.getAttribute('min')) || 1;
+                    const maxValue = parseInt(this.getAttribute('max')) || 99;
+
+                    // Validate input
+                    if (isNaN(newValue) || newValue < minValue) {
+                        newValue = minValue;
+                        this.value = newValue;
+                    } else if (newValue > maxValue) {
+                        newValue = maxValue;
+                        this.value = newValue;
+                    }
+
+                    // Update button states
+                    const decreaseBtn = document.querySelector(`.decrease-btn[data-id="${cartId}"]`);
+                    const increaseBtn = document.querySelector(`.increase-btn[data-id="${cartId}"]`);
+
+                    decreaseBtn.disabled = newValue <= minValue;
+                    increaseBtn.disabled = newValue >= maxValue;
+
+                    // Update cart quantity
+                    updateCartQuantity(cartId, newValue);
+                });
+
+                // Handle blur event to ensure valid value
+                input.addEventListener('blur', function () {
+                    if (this.value === '' || parseInt(this.value) < 1) {
+                        this.value = 1;
+                        updateCartQuantity(this.getAttribute('data-id'), 1);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.decrease-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const cartId = this.getAttribute('data-id');
+                    const input = document.querySelector(`.quantity-input[data-id="${cartId}"]`);
+                    let currentValue = parseInt(input.value);
+
+                    if (currentValue > 1) {
+                        input.value = currentValue - 1;
+                        updateCartQuantity(cartId, currentValue - 1);
+                    }
+
+                    // Disable decrease button if quantity is 1
+                    this.disabled = (currentValue - 1) <= 1;
+                });
+            });
+
+            document.querySelectorAll('.increase-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const cartId = this.getAttribute('data-id');
+                    const input = document.querySelector(`.quantity-input[data-id="${cartId}"]`);
+                    let currentValue = parseInt(input.value);
+                    const maxValue = parseInt(input.getAttribute('max')) || 99;
+
+                    if (currentValue < maxValue) {
+                        input.value = currentValue + 1;
+                        updateCartQuantity(cartId, currentValue + 1);
+                    }
+
+                    // Enable/disable buttons based on new value
+                    const decreaseBtn = document.querySelector(`.decrease-btn[data-id="${cartId}"]`);
+                    decreaseBtn.disabled = (currentValue + 1) <= 1;
+                    this.disabled = (currentValue + 1) >= maxValue;
+                });
+            });
+
+            // Initialize button states
+            document.querySelectorAll('.quantity-input').forEach(input => {
+                const cartId = input.getAttribute('data-id');
+                const currentValue = parseInt(input.value);
+                const maxValue = parseInt(input.getAttribute('max')) || 99;
+
+                const decreaseBtn = document.querySelector(`.decrease-btn[data-id="${cartId}"]`);
+                const increaseBtn = document.querySelector(`.increase-btn[data-id="${cartId}"]`);
+
+                decreaseBtn.disabled = currentValue <= 1;
+                increaseBtn.disabled = currentValue >= maxValue;
+            });
+        });
+
+        function updateCartQuantity(cartId, newQuantity) {
+            fetch('/user/update-quantity', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    cartId: cartId,
+                    quantity: newQuantity
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Quantity updated successfully');
+                        // Update total price if needed
+                        updateCartTotal();
+                    } else {
+                        console.error('Failed to update quantity');
+                        // Revert input value on error
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    location.reload();
+                });
+
+
+            // Thêm vào phần script trong DOMContentLoaded
+        }
+
+        // function updateCartTotal() {
+        //     // Update total cart price logic here
+        //     // You can calculate total from all quantity inputs and prices
+        // }
+
+        document.querySelectorAll('.ti-trash-filled').forEach(deleteBtn => {
+            deleteBtn.addEventListener('click', function () {
+                const cartId = this.getAttribute('data-id');
+
+                // Hiển thị confirm dialog
+                if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?')) {
+                    deleteCartItem(cartId);
+                }
+            });
+        });
+
+        function deleteCartItem(cartId) {
+            fetch('/user/delete-cart-item', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    cartId: cartId
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Remove item from DOM
+                        const cartElement = document.querySelector(`[data-id="${cartId}"]`).closest('div');
+                        cartElement.remove();
+
+                        // Update cart count in header if exists
+                        updateCartCount();
+                        updateCartTotal();
+
+                        // Check if cart is empty
+                        const remainingItems = document.querySelectorAll('.quantity-input-wrapper').length;
+                        if (remainingItems === 0) {
+                            location.reload(); // Reload to show empty cart message
+                        }
+                    } else {
+                        alert('Không thể xóa sản phẩm. Vui lòng thử lại!');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra. Vui lòng thử lại!');
+                });
+        }
+
+        function updateCartCount() {
+            // Update cart count in navigation if exists
+            const cartCountElement = document.querySelector('.cart-count');
+            if (cartCountElement) {
+                const currentCount = parseInt(cartCountElement.textContent) || 0;
+                cartCountElement.textContent = Math.max(0, currentCount - 1);
+            }
+        }
+
+        function calculateCartTotal() {
+            let total = 0;
+
+            // Lặp qua tất cả các cart items
+            document.querySelectorAll('.quantity-input').forEach(input => {
+                const cartId = input.getAttribute('data-id');
+                const quantity = parseInt(input.value) || 0;
+
+                // Tìm price element tương ứng với cart item này
+                const priceElement = document.querySelector(`[data-id="${cartId}"]`).closest('div').querySelector('h5 span');
+                const priceText = priceElement.textContent.replace(/\./g, '').replace(/,/g, ''); // Remove formatting
+                const price = parseInt(priceText) || 0;
+
+                total += price * quantity;
+            });
+
+            return total;
+        }
+
+        function updateCartTotal() {
+            const total = calculateCartTotal();
+            const formattedTotal = new Intl.NumberFormat('vi-VN').format(total);
+
+            // Cập nhật total element nếu tồn tại
+            const totalElement = document.querySelector('#cart-total');
+            if (totalElement) {
+                totalElement.textContent = formattedTotal;
+            }
+
+            return total;
+        }
+
+    </script>
+
+</section>
+</body>
+</html>

@@ -16,7 +16,6 @@ import java.util.Date;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
     @Column(unique = true, nullable = false)
@@ -26,9 +25,7 @@ public class User {
 
     @OneToOne(cascade = CascadeType.ALL, optional = false, fetch = FetchType.EAGER) // Change to EAGER
     @JoinColumn(name = "userId", referencedColumnName = "userId")
-    private UserAccount userAccount;
-
-//    private Boolean isEnable;
+    private UserAccount userAccount = null;
 
     private Boolean accountNonLocked;
 

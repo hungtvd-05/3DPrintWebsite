@@ -87,6 +87,63 @@
             font-size: 0.9em;
             color: #6c757d;
         }
+
+        /* Mobile responsive styles */
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+
+            .col-xxl-8.offset-xxl-2 {
+                margin-left: 0;
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+
+            .col-xl-8.offset-xl-2 {
+                margin-left: 0;
+            }
+
+            .form-control {
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+
+            .address-suggestion-list {
+                max-height: 150px; /* Smaller on mobile */
+            }
+
+            h4, h5 {
+                font-size: 1.1rem;
+            }
+
+            .btn {
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .row {
+                margin-left: -10px;
+                margin-right: -10px;
+            }
+
+            .col-md-6 {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+
+            .form-label {
+                font-size: 14px;
+                margin-bottom: 5px;
+            }
+
+            .selected-address-info {
+                font-size: 12px;
+                padding: 6px;
+            }
+        }
     </style>
     <script type="importmap">
         {
@@ -154,6 +211,14 @@
                                 </td>
                             </tr>
                             <tr>
+                                <th scope="row">Link liên hệ</th>
+                                <td>:</td>
+                                <td>
+                                    <input type="tel" name="linkToOrder" class="form-control"
+                                           th:value="${user.linkToOrder}">
+                                </td>
+                            </tr>
+                            <tr>
                                 <th scope="row">Email</th>
                                 <td>:</td>
                                 <td><input type="text" name="" class="form-control"
@@ -168,74 +233,70 @@
                     </form>
                     <form action="/user/update-profile-2" method="post" enctype="multipart/form-data">
                         <input type="hidden" th:value="${user.userId}" name="id">
-                        <table class="table table-borderless">
 
-                            <tbody>
-                            <tr>
-                                <th scope="row">Địa chỉ</th>
-                                <td>:</td>
-                                <td>
-                                    <!-- Address Selection Section - Updated to use input suggestion -->
-                                    <div class="row mb-3">
-                                        <div class="col-md-6">
-                                            <label for="province-input" class="form-label">Tỉnh/Thành phố</label>
-                                            <div class="address-input-wrapper">
-                                                <input type="text"
-                                                       class="form-control"
-                                                       id="province-input"
-                                                       placeholder="Tìm kiếm tỉnh/thành phố..."
-                                                       autocomplete="off" th:value="${user.province}">
-                                                <div id="province-suggestions" class="address-suggestion-list"></div>
-                                                <input type="hidden" id="province-code" name="provinceCode"
-                                                       th:value="${user.provinceCode}">
-                                                <input type="hidden" id="province-name" name="province"
-                                                       th:value="${user.province}">
-                                            </div>
-                                            <div id="selected-province-info" class="selected-address-info"
-                                                 style="display: none;"></div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="ward-input" class="form-label">Phường/Xã</label>
-                                            <div class="address-input-wrapper">
-                                                <input type="text"
-                                                       class="form-control"
-                                                       id="ward-input"
-                                                       placeholder="Tìm kiếm phường/xã..."
-                                                       autocomplete="off"
-                                                       disabled th:value="${user.ward}">
-                                                <div id="ward-suggestions" class="address-suggestion-list"></div>
-                                                <input type="hidden" id="ward-code" name="wardCode"
-                                                       th:value="${user.wardCode}">
-                                                <input type="hidden" id="ward-name" name="ward" th:value="${user.ward}">
-                                                <input type="hidden" id="ward-fullName" name="wardFullName"
-                                                       th:value="${user.wardFullName}">
-                                            </div>
-                                            <div id="selected-ward-info" class="selected-address-info"
-                                                 style="display: none;"></div>
-                                        </div>
+                        <!-- Address Section -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Địa chỉ</h5>
+
+                            <!-- Province and Ward Selection -->
+                            <div class="row mb-3">
+                                <div class="col-md-6 mb-3">
+                                    <label for="province-input" class="form-label">Tỉnh/Thành phố</label>
+                                    <div class="address-input-wrapper">
+                                        <input type="text"
+                                               class="form-control"
+                                               id="province-input"
+                                               placeholder="Tìm kiếm tỉnh/thành phố..."
+                                               autocomplete="off" th:value="${user.province}">
+                                        <div id="province-suggestions" class="address-suggestion-list"></div>
+                                        <input type="hidden" id="province-code" name="provinceCode"
+                                               th:value="${user.provinceCode}">
+                                        <input type="hidden" id="province-name" name="province"
+                                               th:value="${user.province}">
                                     </div>
-                                    <div class="row">
-                                        <div class="col-12">
-                                            <label for="detailAddress" class="form-label">Địa chỉ chi tiết</label>
-                                            <input type="text" class="form-control" id="detailAddress"
-                                                   name="detailAddress"
-                                                   placeholder="Số nhà, tên đường..." th:value="${user.address}">
-                                        </div>
+                                    <div id="selected-province-info" class="selected-address-info"
+                                         style="display: none;"></div>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="ward-input" class="form-label">Phường/Xã</label>
+                                    <div class="address-input-wrapper">
+                                        <input type="text"
+                                               class="form-control"
+                                               id="ward-input"
+                                               placeholder="Tìm kiếm phường/xã..."
+                                               autocomplete="off"
+                                               disabled th:value="${user.ward}">
+                                        <div id="ward-suggestions" class="address-suggestion-list"></div>
+                                        <input type="hidden" id="ward-code" name="wardCode"
+                                               th:value="${user.wardCode}">
+                                        <input type="hidden" id="ward-name" name="ward" th:value="${user.ward}">
+                                        <input type="hidden" id="ward-fullName" name="wardFullName"
+                                               th:value="${user.wardFullName}">
                                     </div>
-                                </td>
-                            </tr>
+                                    <div id="selected-ward-info" class="selected-address-info"
+                                         style="display: none;"></div>
+                                </div>
+                            </div>
 
-                            <tr>
-                                <th scope="row">About me</th>
-                                <td>:</td>
-                                <td>
-                                    <textarea id="editor" class="form-control" name="aboutMe"
-                                              th:utext="${user.aboutMe}"></textarea>
-                                </td>
-                            </tr>
+                            <!-- Detail Address -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <label for="detailAddress" class="form-label">Địa chỉ chi tiết</label>
+                                    <input type="text" class="form-control" id="detailAddress"
+                                           name="detailAddress"
+                                           placeholder="Số nhà, tên đường..." th:value="${user.address}">
+                                </div>
+                            </div>
+                        </div>
 
-                            </tbody>
-                        </table>
+                        <!-- About Me Section -->
+                        <div class="mb-4">
+                            <label for="editor" class="form-label">About me</label>
+                            <textarea id="editor" class="form-control" name="aboutMe"
+                                      th:utext="${user.aboutMe}"></textarea>
+                        </div>
+
                         <div class="text-center mb-4">
                             <button class="btn btn-sm bg-primary text-light">Cập nhật</button>
                         </div>

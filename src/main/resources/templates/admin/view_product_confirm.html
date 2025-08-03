@@ -787,8 +787,12 @@
         }
 
         @keyframes spin {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
         }
 
         /* Responsive - giữ padding đồng nhất */
@@ -896,12 +900,35 @@
                     </button>
                 </div>
             </div>
+            <div class="row">
+                <div class="col-sm-2 col-4 my-auto">
+                    <h6 class="mb-0">Chi phí đặt in</h6>
+                </div>
+                <div class="col-sm-9 col-6 p-2">
+                    <input type="number"
+                           class="form-control"
+                           id="costInput"
+                           th:value="${product.price}"
+                           placeholder="Nhập chi phí (VND) ..."
+                           min="0"
+                           step="1000">
+                </div>
+                <div class="col-sm-1 col-2 p-2">
+                    <button class="btn w-100 fs-6 d-flex justify-content-center align-items-center btn-primary"
+                            id="updateCostButton"
+                            th:data-id="${product.id}"
+                            title="Cập nhật chi phí">
+                        <i class="ti ti-checks"></i>
+                    </button>
+                </div>
+            </div>
         </div>
         <div class="con mb-3">
             <div class="info">
                 <button onclick="history.back()" class="back-button"><i class="ti ti-chevron-left"></i></button>
                 <div class="avatar">
-                    <img th:src="@{'/img/avatar/' + ${product.getCreatedBy().getProfileImage().isEmpty()?product.getCreatedBy().getProfileImage():'user.png'}}" alt="Product Avatar" class="avatar-img">
+                    <img th:src="@{'/img/avatar/' + ${product.getCreatedBy().getProfileImage().isEmpty()?product.getCreatedBy().getProfileImage():'user.png'}}"
+                         alt="Product Avatar" class="avatar-img">
                 </div>
                 <div class="info-text">
                     <h5 th:text="${product.getName()}">User Name</h5>
@@ -912,30 +939,38 @@
                 <div class="carousel-container">
                     <div class="main-image">
                         <button class="nav-button prev-button" id="prevButton"><i class="ti ti-arrow-left"></i></button>
-                        <img th:src="@{'/product/img/' + ${product.getImageFiles().iterator().next()}}" alt="Main Product Image" id="mainImage">
-                        <button class="nav-button next-button" id="nextButton"><i class="ti ti-arrow-right"></i></button>
-                        <button class="zoom-button" id="zoomButton" title="Zoom Image"><i class="ti ti-resize"></i></button>
-                        <button class="download-button" id="downloadButton" title="Download Image"><i class="ti ti-photo-down"></i></button>
+                        <img th:src="@{'/product/img/' + ${product.getImageFiles().iterator().next()}}"
+                             alt="Main Product Image" id="mainImage">
+                        <button class="nav-button next-button" id="nextButton"><i class="ti ti-arrow-right"></i>
+                        </button>
+                        <button class="zoom-button" id="zoomButton" title="Zoom Image"><i class="ti ti-resize"></i>
+                        </button>
+                        <button class="download-button" id="downloadButton" title="Download Image"><i
+                                class="ti ti-photo-down"></i></button>
                     </div>
                     <div class="thumbnail-list" id="thumbnailList">
-                        <img th:src="@{'/product/img/' + ${img}}" th:alt="${'Thumbnail ' + (i.index + 1)}" class="active" th:each="img, i:${product.getImageFiles()}">                    </div>
+                        <img th:src="@{'/product/img/' + ${img}}" th:alt="${'Thumbnail ' + (i.index + 1)}"
+                             class="active" th:each="img, i:${product.getImageFiles()}"></div>
                 </div>
             </div>
         </div>
         <div class="con">
             <div class="row text-center">
                 <div class="col ">
-                    <a class="action-button" th:href="@{/admin/view_product_confirm:{id}(id=${product.id})}" title="View Product Details">
+                    <a class="action-button" th:href="@{/admin/view_product_confirm:{id}(id=${product.id})}"
+                       title="View Product Details">
                         <i th:class="${(view.isEmpty()) ? 'ti ti-info-circle-filled' : 'ti ti-info-circle'}"></i>
                     </a>
                 </div>
                 <div class="col">
-                    <a class="action-button" th:href="@{/admin/view_product_confirm:{id}/files(id=${product.id})}" title="View Files">
+                    <a class="action-button" th:href="@{/admin/view_product_confirm:{id}/files(id=${product.id})}"
+                       title="View Files">
                         <i th:class="${(view == 'files') ? 'ti ti-file-filled' : 'ti ti-file'}"></i>
                     </a>
                 </div>
                 <div class="col">
-                    <button class="action-button favorite-main-button" th:data-id="${product.id}" title="Add to Favorites">
+                    <button class="action-button favorite-main-button" th:data-id="${product.id}"
+                            title="Add to Favorites">
                         <i th:class="${(user != null && user.getFavoriteProducts().contains(product.id)) ? 'ti ti-heart-filled' : 'ti ti-heart'}"></i>
                     </button>
                 </div>
@@ -969,14 +1004,17 @@
                     <th:block th:each="file : ${product.getStlFiles().entrySet()}">
                         <tr>
                             <td>
-                                <img th:src="'/product/stl/' + ${file.getKey()} + '_preview.png'" alt="File Image" class="file-image">
+                                <img th:src="'/product/stl/' + ${file.getKey()} + '_preview.png'" alt="File Image"
+                                     class="file-image">
                             </td>
                             <td class="w-100">
                                 <div class="file-info">
-                                    <p th:text="'Update: ' + ${#temporals.format(file.getValue().getCreatedAt(), 'dd/MM/yyyy')}">Update Date</p>
+                                    <p th:text="'Update: ' + ${#temporals.format(file.getValue().getCreatedAt(), 'dd/MM/yyyy')}">
+                                        Update Date</p>
 
                                     <div class="d-flex justify-content-between">
-                                        <p class="m-0 mt-auto" th:text="'Size: ' + ${file.getValue().getFileSizeFormatted()}">File Size</p>
+                                        <p class="m-0 mt-auto"
+                                           th:text="'Size: ' + ${file.getValue().getFileSizeFormatted()}">File Size</p>
                                         <button class="btn btn-primary view-stl-btn ms-auto"
                                                 th:data-filename="${file.getKey()}"
                                                 th:data-filesize="${file.getValue().getFileSizeFormatted()}"
@@ -1001,10 +1039,13 @@
         </div>
 
         <div class="modal" id="imageModal">
-            <button class="modal-nav-button modal-prev-button" id="modalPrevButton"><i class="ti ti-arrow-left"></i></button>
+            <button class="modal-nav-button modal-prev-button" id="modalPrevButton"><i class="ti ti-arrow-left"></i>
+            </button>
             <img id="modalImage" src="" alt="Zoomed Image">
-            <button class="modal-nav-button modal-next-button" id="modalNextButton"><i class="ti ti-arrow-right"></i></button>
-            <button class="modal-download-button" id="modalDownloadButton" title="Download Image"><i class="ti ti-photo-down"></i></button>
+            <button class="modal-nav-button modal-next-button" id="modalNextButton"><i class="ti ti-arrow-right"></i>
+            </button>
+            <button class="modal-download-button" id="modalDownloadButton" title="Download Image"><i
+                    class="ti ti-photo-down"></i></button>
             <button class="modal-close" id="modalClose"><i class="ti ti-x"></i></button>
         </div>
 
@@ -1085,14 +1126,14 @@
                 const thumbnailHeight = thumbnail.offsetHeight;
                 const containerHeight = thumbnailList.clientHeight;
                 const scrollPosition = thumbnailTop - (containerHeight - thumbnailHeight) / 2;
-                thumbnailList.scrollTo({ top: scrollPosition, behavior: 'smooth' });
+                thumbnailList.scrollTo({top: scrollPosition, behavior: 'smooth'});
             } else {
                 // Horizontal layout: scroll horizontally
                 const thumbnailLeft = thumbnail.offsetLeft;
                 const thumbnailWidth = thumbnail.offsetWidth;
                 const containerWidth = thumbnailList.clientWidth;
                 const scrollPosition = thumbnailLeft - (containerWidth - thumbnailWidth) / 2;
-                thumbnailList.scrollTo({ left: scrollPosition, behavior: 'smooth' });
+                thumbnailList.scrollTo({left: scrollPosition, behavior: 'smooth'});
             }
         }
 
@@ -1132,7 +1173,7 @@
                 modalImage.alt = thumbnails[index].alt;
                 currentIndex = index;
                 scrollThumbnailIntoView(index); // Scroll to the selected thumbnail
-                mainImage.addEventListener('load', syncThumbnailListHeight, { once: true });
+                mainImage.addEventListener('load', syncThumbnailListHeight, {once: true});
             }
         }
 
@@ -1324,8 +1365,8 @@
 
     <script type="module" th:if="${view == 'files'}">
         import * as THREE from 'three';
-        import { STLLoader } from 'three/addons/loaders/STLLoader.js';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import {STLLoader} from 'three/addons/loaders/STLLoader.js';
+        import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
         let stlScene, stlCamera, stlRenderer, stlControls, stlMesh;
         let isWireframe = false;
@@ -1407,7 +1448,7 @@
             stlCamera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
 
             // Renderer setup
-            stlRenderer = new THREE.WebGLRenderer({ antialias: true });
+            stlRenderer = new THREE.WebGLRenderer({antialias: true});
             stlRenderer.setSize(canvasWidth, canvasHeight);
             stlRenderer.shadowMap.enabled = true;
             stlRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -1669,286 +1710,103 @@
             }
         }
     </script>
+    <script>
+        $(document).ready(function() {
+            // Xử lý cập nhật chi phí
+            $('#updateCostButton').click(function() {
+                const productId = $(this).data('id');
+                const cost = $('#costInput').val();
 
-    <script th:if="${view == 'comments' && user != null}">
-        const productId = document.getElementById('productId').value;
-        const commentInput = document.getElementById('commentInput');
-        const sendButton = document.getElementById('sendButton');
-        const parentCommentId = document.getElementById('parentCommentId').value;
-        const commentList = document.querySelector('.comment-list');
-
-
-        const currentUser = {
-            fullName: /*[[${user.fullName}]]*/ 'User',
-            profileImage: /*[[${user.profileImage}]]*/ 'user.png'
-        };
-
-
-
-        commentInput.addEventListener('input', () => {
-            sendButton.disabled = commentInput.value.trim() === '';
-        });
-
-        sendButton.addEventListener('click', () => {
-            const comment = commentInput.value.trim();
-            // const parentCommentId = parentCommentIdInput.value;
-
-            if (comment) {
-                const formData = new FormData();
-                formData.append('content', comment);
-                formData.append('productId', productId);
-                if (parentCommentId && parentCommentId !== 'null') {
-                    formData.append('parentCommentId', parentCommentId);
+                if (!cost || cost.trim() === '') {
+                    alert('Vui lòng nhập chi phí');
+                    return;
                 }
 
-                commentInput.value = ''; // Clear input
-                sendButton.disabled = true; // Disable button after sending
-                parentCommentId.value = null; // Clear parent comment ID
-                sendButton.innerHTML = '<i class="ti ti-loader"></i>';
-                fetch('/api/add-comment', {
-                    method: 'POST',
-                    // headers: { 'Content-Type': 'application/json' },
-                    body: formData
-                }).then(response => {
+                if (parseFloat(cost) < 0) {
+                    alert('Chi phí không được âm');
+                    return;
+                }
 
-                }).finally(() => {
-                        sendButton.innerHTML = '<i class="ti ti-corner-right-up"></i>';
+                // Disable button và hiển thị loading
+                const button = $(this);
+                const originalHtml = button.html();
+                button.prop('disabled', true).html('<i class="ti ti-loader-2"></i>');
+
+                $.ajax({
+                    url: '/admin/update-product-cost',
+                    type: 'POST',
+                    data: {
+                        productId: productId,
+                        cost: parseFloat(cost)
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Hiển thị thông báo thành công
+                            showNotification('success', response.message);
+
+                            // Cập nhật giá trị input với giá trị mới
+                            $('#costInput').val(response.newCost);
+                        } else {
+                            showNotification('error', response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        let errorMessage = 'Lỗi khi cập nhật chi phí';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        showNotification('error', errorMessage);
+                    },
+                    complete: function() {
+                        // Restore button
+                        button.prop('disabled', false).html(originalHtml);
                     }
-                );
-            }
-        });
+                });
+            });
 
-        // Allow submitting comment with Enter key
-        commentInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !sendButton.disabled) {
-                sendButton.click();
-            }
-        });
+            // Hàm hiển thị thông báo
+            function showNotification(type, message) {
+                // Tạo notification element
+                const notification = $('<div>')
+                    .addClass(`alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`)
+                    .css({
+                        'position': 'fixed',
+                        'top': '20px',
+                        'right': '20px',
+                        'z-index': '9999',
+                        'min-width': '300px'
+                    })
+                    .html(`
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `);
 
-    </script>
+                // Thêm vào body
+                $('body').append(notification);
 
-    <script>
-        // Handle reply functionality
-        document.addEventListener('click', (e) => {
-            // Handle reply button click
-            // Handle reply button click
-            if (e.target.closest('.reply-button')) {
-                const button = e.target.closest('.reply-button');
-                const commentId = button.getAttribute('data-comment-id');
-                const commentUser = button.getAttribute('data-comment-user');
-
-                const replyContainer = document.getElementById(`reply-container-${commentId}`);
-                const replyInput = document.getElementById(`reply-input-${commentId}`);
-
-                if (replyContainer && replyInput) {
-                    // Check if the current reply container is already visible
-                    const isCurrentlyVisible = replyContainer.style.display === 'block';
-
-                    // Hide all other reply containers first
-                    document.querySelectorAll('.reply-input-container').forEach(container => {
-                        container.style.display = 'none';
+                // Tự động ẩn sau 3 giây
+                setTimeout(function() {
+                    notification.fadeOut(function() {
+                        $(this).remove();
                     });
-
-                    // Toggle the current reply container
-                    if (isCurrentlyVisible) {
-                        // If it was visible, keep it hidden (already hidden by the forEach above)
-                        replyInput.value = ''; // Clear the input when hiding
-                    } else {
-                        // If it wasn't visible, show it
-                        replyContainer.style.display = 'block';
-                        replyInput.placeholder = `Trả lời ${commentUser}...`;
-
-                        // Smooth scroll to reply input
-                        setTimeout(() => {
-                            replyInput.focus();
-                            replyContainer.scrollIntoView({
-                                behavior: 'smooth',
-                                block: 'nearest'
-                            });
-                        }, 100);
-                    }
-                }
+                }, 3000);
             }
 
-            // Handle reply send button
-            if (e.target.closest('.reply-send-button')) {
-                const button = e.target.closest('.reply-send-button');
-                const commentId = button.getAttribute('data-comment-id');
-                const replyInput = document.getElementById(`reply-input-${commentId}`);
-
-                if (replyInput) {
-                    sendReply(commentId, replyInput.value.trim(), button);
+            // Xử lý Enter key trong input cost
+            $('#costInput').keypress(function(e) {
+                if (e.which === 13) { // Enter key
+                    $('#updateCostButton').click();
                 }
-            }
+            });
+
+            // Format số khi nhập
+            $('#costInput').on('input', function() {
+                let value = $(this).val().replace(/[^0-9.]/g, '');
+                if (value !== $(this).val()) {
+                    $(this).val(value);
+                }
+            });
         });
-
-        // Handle reply input changes
-        document.addEventListener('input', (e) => {
-            if (e.target.classList.contains('reply-input')) {
-                const commentId = e.target.id.replace('reply-input-', '');
-                const sendButton = document.getElementById(`reply-send-${commentId}`);
-
-                if (sendButton) {
-                    sendButton.disabled = e.target.value.trim() === '';
-                }
-            }
-        });
-
-        // Handle Enter key for reply inputs
-        document.addEventListener('keypress', (e) => {
-            if (e.target.classList.contains('reply-input') && e.key === 'Enter') {
-                const commentId = e.target.id.replace('reply-input-', '');
-                const sendButton = document.getElementById(`reply-send-${commentId}`);
-
-                if (sendButton && !sendButton.disabled) {
-                    sendButton.click();
-                }
-            }
-        });
-
-        // Function to send reply
-        function sendReply(parentCommentId, content, sendButton) {
-            if (!content) return;
-
-            const formData = new FormData();
-            formData.append('content', content);
-            formData.append('productId', productId);
-            formData.append('parentCommentId', parentCommentId);
-
-            // Show loading state
-            sendButton.innerHTML = '<i class="ti ti-loader"></i>';
-            sendButton.disabled = true;
-
-            fetch('/api/add-comment', {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => {
-                    if (response.ok) {
-                        // Clear input and hide reply container
-                        const replyInput = document.getElementById(`reply-input-${parentCommentId}`);
-                        const replyContainer = document.getElementById(`reply-container-${parentCommentId}`);
-
-                        if (replyInput) replyInput.value = '';
-                        if (replyContainer) replyContainer.style.display = 'none';
-                    } else {
-                        console.error('Failed to send reply');
-                        alert('Có lỗi xảy ra khi gửi phản hồi');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error sending reply:', error);
-                    alert('Có lỗi xảy ra khi gửi phản hồi');
-                })
-                .finally(() => {
-                    // Reset send button
-                    sendButton.innerHTML = '<i class="ti ti-send"></i>';
-                    sendButton.disabled = true;
-                });
-        }
-
-        // Handle toggle replies functionality
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.toggle-replies-button')) {
-                const button = e.target.closest('.toggle-replies-button');
-                const commentId = button.getAttribute('data-comment-id');
-                const replyCount = button.getAttribute('data-reply-count');
-                const repliesContainer = document.getElementById(`replies-container-${commentId}`);
-                const icon = button.querySelector('i');
-                const text = button.querySelector('span');
-
-                if (repliesContainer) {
-                    const isVisible = repliesContainer.style.display === 'block';
-
-                    if (isVisible) {
-                        // Hide replies
-                        repliesContainer.style.display = 'none';
-                        icon.className = 'ti ti-chevron-down';
-                        text.textContent = `Xem ${replyCount} phản hồi`;
-                    } else {
-                        // Show replies
-                        repliesContainer.style.display = 'block';
-                        icon.className = 'ti ti-chevron-up';
-                        text.textContent = 'Ẩn phản hồi';
-                    }
-                }
-            }
-        });
-    </script>
-    <script>
-        // Handle reply input changes for bottom reply inputs
-        document.addEventListener('input', (e) => {
-            if (e.target.id && e.target.id.startsWith('reply-input-bottom-')) {
-                const commentId = e.target.id.replace('reply-input-bottom-', '');
-                const sendButton = document.getElementById(`reply-send-bottom-${commentId}`);
-
-                if (sendButton) {
-                    sendButton.disabled = e.target.value.trim() === '';
-                }
-            }
-        });
-
-        // Handle Enter key for bottom reply inputs
-        document.addEventListener('keypress', (e) => {
-            if (e.target.id && e.target.id.startsWith('reply-input-bottom-') && e.key === 'Enter') {
-                const commentId = e.target.id.replace('reply-input-bottom-', '');
-                const sendButton = document.getElementById(`reply-send-bottom-${commentId}`);
-
-                if (sendButton && !sendButton.disabled) {
-                    sendButton.click();
-                }
-            }
-        });
-
-        // Handle bottom reply send button clicks
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.reply-send-button') && e.target.closest('.reply-send-button').id.startsWith('reply-send-bottom-')) {
-                const button = e.target.closest('.reply-send-button');
-                const commentId = button.getAttribute('data-comment-id');
-                const replyInput = document.getElementById(`reply-input-bottom-${commentId}`);
-
-                if (replyInput) {
-                    sendBottomReply(commentId, replyInput.value.trim(), button, replyInput);
-                }
-            }
-        });
-
-        // Function to send reply from bottom input
-        function sendBottomReply(parentCommentId, content, sendButton, replyInput) {
-            if (!content) return;
-
-            const formData = new FormData();
-            formData.append('content', content);
-            formData.append('productId', productId);
-            formData.append('parentCommentId', parentCommentId);
-
-            // Show loading state
-            sendButton.innerHTML = '<i class="ti ti-loader"></i>';
-            sendButton.disabled = true;
-
-            fetch('/api/add-comment', {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => {
-                    if (response.ok) {
-                        // Clear input after successful send
-                        replyInput.value = '';
-                    } else {
-                        console.error('Failed to send reply');
-                        alert('Có lỗi xảy ra khi gửi phản hồi');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error sending reply:', error);
-                    alert('Có lỗi xảy ra khi gửi phản hồi');
-                })
-                .finally(() => {
-                    // Reset send button
-                    sendButton.innerHTML = '<i class="ti ti-send"></i>';
-                    sendButton.disabled = true;
-                });
-        }
     </script>
 </section>
 

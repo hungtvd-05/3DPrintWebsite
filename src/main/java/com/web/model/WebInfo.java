@@ -36,6 +36,8 @@ public class WebInfo {
 
     private String freeShipping = "";
 
+    private String linkToOrder = "";
+
     @ElementCollection
     @CollectionTable(name = "web_info_attributes",
             joinColumns = @JoinColumn(name = "web_info_id"))

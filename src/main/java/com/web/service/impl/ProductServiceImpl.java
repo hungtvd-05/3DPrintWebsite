@@ -80,7 +80,7 @@ public class ProductServiceImpl implements ProductService {
 
         product.setCreatedBy(currentUser);
 
-        if (currentUser.getRole() == "ROLE_ADMIN") {
+        if (currentUser.getRole().equals("ROLE_ADMIN")) {
             product.setConfirmed(1);
         }
 

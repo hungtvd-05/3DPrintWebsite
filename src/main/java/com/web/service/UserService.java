@@ -1,5 +1,6 @@
 package com.web.service;
 
+import com.web.model.Product;
 import com.web.model.User;
 import com.web.model.UserAccount;
 
@@ -9,7 +10,7 @@ public interface UserService {
     boolean unlockAccountTimeExpired(User user);
 //    UserDTO getUserDTOByEmail(String email);
     Boolean existsEmail(String email);
-    User addUser(User user);
+    User addUser(User user, UserAccount userAccount);
     void updateConfirmEmailToken(String email, String confirmToken);
     User confirmEmail(String confirmToken);
     void updateUserResetToken(User user, String resetToken);
@@ -20,4 +21,5 @@ public interface UserService {
     UserAccount getAdminAccount();
     UserAccount getCurrentUserAccount();
     UserAccount getUserAccountById(Long id);
+    UserAccount getUserAccountByEmail(String email);
 }

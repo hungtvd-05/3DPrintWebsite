@@ -1,5 +1,6 @@
 package com.web.service.impl;
 
+import com.web.model.Product;
 import com.web.model.User;
 import com.web.model.UserAccount;
 import com.web.repository.UserAccountRepository;
@@ -15,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -83,15 +86,18 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public User addUser(User user) {
-        user.getUserAccount().setProfileImage("default.png");
-        user.getUserAccount().setRole("ROLE_USER");
-        user.getUserAccount().setIsEnable(true);
-        user.getUserAccount().setConfirmed(false);
+    public User addUser(User user, UserAccount userAccount) {
+
+        userAccount.setProfileImage("default.png");
+        userAccount.setRole("ROLE_USER");
+        userAccount.setIsEnable(true);
+        userAccount.setConfirmed(false);
+        UserAccount savedUserAccount = userAccountRepository.save(userAccount);
+
+        user.setUserId(savedUserAccount.getUserId());
         user.setAccountNonLocked(true);
         user.setFailedAttempt(0);
-        String encodePassword =  passwordEncoder.encode(user.getPassword());
-        user.setPassword(encodePassword);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         return userRepository.save(user);
     }
@@ -110,6 +116,10 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public User confirmEmail(String confirmToken) {
         User user = userRepository.findByConfirmToken(confirmToken);
+        if (ObjectUtils.isEmpty(user)) {
+            return null;
+        }
+        user.setConfirmToken(null);
         user.getUserAccount().setConfirmed(true);
         return userRepository.save(user);
     }
@@ -161,6 +171,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserAccount getUserAccountById(Long id) {
         return userAccountRepository.findByUserId(id);
+    }
+
+    @Override
+    public UserAccount getUserAccountByEmail(String email) {
+        return userAccountRepository.findByEmail(email);
     }
 
 }
