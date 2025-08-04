@@ -156,10 +156,13 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-3 pe-0">
+                    <div class="col-2 pe-0">
                         <a onclick="history.back()" class="btn btn-success w-100"><i class="ti ti-logout-2"></i></a>
                     </div>
-                    <div class="col-9">
+                    <div class="col-2 pe-0">
+                        <a th:href="'/user/delete-address:' + ${address.id}" class="btn btn-danger w-100"><i class="ti ti-trash-x"></i></a>
+                    </div>
+                    <div class="col-8">
                         <button class="btn btn-primary w-100">Lưu địa chỉ</button>
                     </div>
                 </div>

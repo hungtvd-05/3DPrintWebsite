@@ -457,4 +457,45 @@ public class UserController {
 
         return "redirect:/user/addresses";
     }
+
+    @GetMapping("/delete-address:{id:[0-9]+}")
+    public String deleteAddress(@PathVariable Long id, Principal p, HttpSession session) {
+        UserAccount user = userService.getUserAccountByEmail(p.getName());
+        Address address = addressService.findById(id);
+        if (!ObjectUtils.isEmpty(address) && address.getUserId().equals(user.getUserId())) {
+            addressService.deleteAddress(address);
+            session.setAttribute("succMsg", "Xóa địa chỉ thành công!");
+        } else {
+            session.setAttribute("errorMsg", "Không thể xóa địa chỉ!");
+        }
+        return "redirect:/user/addresses";
+    }
+
+    @GetMapping("/checkout")
+    public String checkout(Model m, Principal p) {
+        UserAccount user = userService.getUserAccountByEmail(p.getName());
+
+        List<CartItemDTO> cartItems = cartService.getCartWithProducts(user.getUserId());
+        Double totalPrice = cartService.calculateTotalPrice(cartItems);
+        if (cartItems.isEmpty()) {
+            m.addAttribute("msg", "Giỏ hàng của bạn đang trống!");
+            return "message";
+        }
+        m.addAttribute("address", addressService.getDefaultAddress(user.getUserId()));
+        m.addAttribute("cartItems", cartItems);
+        m.addAttribute("totalPrice", totalPrice);
+        m.addAttribute("user", user);
+
+        return "user/checkout";
+    }
+
+    @GetMapping("/order-product")
+    public String orderProduct(Model m, Principal p) {
+        UserAccount user = userService.getUserAccountByEmail(p.getName());
+
+
+
+
+        return "user/order_product";
+    }
 }

@@ -13,11 +13,12 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query(value = "SELECT p FROM Product p " +
-            "WHERE (p.createdBy = :userAccount) " +
+            "WHERE (p.createdBy = :userAccount AND p.isDeleted = false ) " +
             "ORDER BY " +
             "CASE WHEN :sortBy = 'az' THEN p.name ELSE null END ASC, " +
             "CASE WHEN :sortBy = 'za' THEN p.name ELSE null END DESC, " +
@@ -28,7 +29,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                                             @Param("sortBy") String sortBy);
 
     @Query(value = "SELECT p FROM Product p " +
-            "WHERE (p.createdBy = :userAccount) " +
+            "WHERE (p.createdBy = :userAccount AND p.isDeleted = false) " +
             "AND p.name LIKE LOWER(CONCAT('%', :keyword, '%')) " +
             "ORDER BY " +
             "CASE WHEN :sortBy = 'az' THEN p.name ELSE null END ASC, " +
@@ -40,23 +41,23 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                                               @Param("userAccount") UserAccount userAccount,
                                               @Param("sortBy") String sortBy);
 
-    @Query("SELECT new com.web.model.ProductDTO(p.id, p.name) FROM Product p WHERE p.confirmed = 1 AND p.status = true")
+    @Query("SELECT new com.web.model.ProductDTO(p.id, p.name) FROM Product p WHERE p.confirmed = 1 AND p.status = true AND p.isDeleted = false")
     List<ProductDTO> findAllProductDTOs();
 
-    @Query("SELECT new com.web.model.ProductDTO(p.id, p.name) FROM Product p WHERE p.confirmed = 1 AND p.status = true AND p.createdBy.role = :role")
+    @Query("SELECT new com.web.model.ProductDTO(p.id, p.name) FROM Product p WHERE p.confirmed = 1 AND p.status = true AND p.createdBy.role = :role AND p.isDeleted = false")
     List<ProductDTO> findAllProductDTOsByRole(@Param("role") String role);
 
-    @Query("SELECT new com.web.model.ProductDTO(p.id, p.name) FROM Product p WHERE (p.createdBy.role != 'ROLE_ADMIN' and p.status = true)")
+    @Query("SELECT new com.web.model.ProductDTO(p.id, p.name) FROM Product p WHERE (p.createdBy.role != 'ROLE_ADMIN' and p.status = true AND p.isDeleted = false)")
     List<ProductDTO> findAllProductDTOsOfUser();
 
-    @Query("SELECT new com.web.model.ProductDTO(p.id, p.name) FROM Product p WHERE p.createdBy.role = 'ROLE_ADMIN'")
+    @Query("SELECT new com.web.model.ProductDTO(p.id, p.name) FROM Product p WHERE p.createdBy.role = 'ROLE_ADMIN' AND p.isDeleted = false")
     List<ProductDTO> findAllProductDTOsOfAdmin();
 
-    @Query("SELECT new com.web.model.ProductDTO(p.id, p.name) FROM Product p WHERE p.createdBy = :userAccount")
+    @Query("SELECT new com.web.model.ProductDTO(p.id, p.name) FROM Product p WHERE p.createdBy = :userAccount AND p.isDeleted = false")
     List<ProductDTO> findAllProductDTOsOfCurrentUser(@Param("userAccount") UserAccount userAccount);
 
     @Query(value = "SELECT p FROM Product p " +
-            "WHERE (p.confirmed = 1 AND p.status = true)" +
+            "WHERE (p.confirmed = 1 AND p.status = true AND p.isDeleted = false)" +
             "ORDER BY " +
             "CASE WHEN :sortBy = 'az' THEN p.name ELSE null END ASC, " +
             "CASE WHEN :sortBy = 'za' THEN p.name ELSE null END DESC, " +
@@ -65,7 +66,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findAllProduct(Pageable pageable, @Param("sortBy") String sortBy);
 
     @Query(value = "SELECT p FROM Product p " +
-            "WHERE (p.confirmed = 1 AND p.status = true AND p.createdBy.role = :role)" +
+            "WHERE (p.confirmed = 1 AND p.status = true AND p.createdBy.role = :role AND p.isDeleted = false)" +
             "ORDER BY " +
             "CASE WHEN :sortBy = 'az' THEN p.name ELSE null END ASC, " +
             "CASE WHEN :sortBy = 'za' THEN p.name ELSE null END DESC, " +
@@ -74,7 +75,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findAllProductByRole(Pageable pageable, @Param("sortBy") String sortBy, @Param("role") String role);
 
     @Query(value = "SELECT p FROM Product p " +
-            "WHERE (p.confirmed = 1 AND p.status = true)" +
+            "WHERE (p.confirmed = 1 AND p.status = true AND p.isDeleted = false)" +
             "AND p.name LIKE LOWER(CONCAT('%', :keyword, '%')) " +
             "ORDER BY " +
             "CASE WHEN :sortBy = 'az' THEN p.name ELSE null END ASC, " +
@@ -84,7 +85,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> searchAllProduct(Pageable pageable, @Param("sortBy") String sortBy, @Param("keyword") String keyword);
 
     @Query(value = "SELECT p FROM Product p " +
-            "WHERE (p.confirmed = 1 AND p.status = true AND p.createdBy.role = :role)" +
+            "WHERE (p.confirmed = 1 AND p.status = true AND p.createdBy.role = :role AND p.isDeleted = false)" +
             "AND p.name LIKE LOWER(CONCAT('%', :keyword, '%')) " +
             "ORDER BY " +
             "CASE WHEN :sortBy = 'az' THEN p.name ELSE null END ASC, " +
@@ -93,7 +94,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "CASE WHEN :sortBy = '' OR :sortBy = 'new' OR :sortBy IS NULL THEN p.id ELSE null END DESC")
     Page<Product> searchAllProductByRole(Pageable pageable, @Param("sortBy") String sortBy, @Param("keyword") String keyword, @Param("role") String role);
 
-    @Query("SELECT p FROM Product p WHERE p.id IN :favoriteIds AND p.status = true AND p.confirmed = 1" +
+    @Query("SELECT p FROM Product p WHERE p.id IN :favoriteIds AND p.status = true AND p.confirmed = 1 AND p.isDeleted = false " +
             "ORDER BY " +
             "CASE WHEN :sortBy = 'az' THEN p.name END ASC, " +
             "CASE WHEN :sortBy = 'za' THEN p.name END DESC, " +
@@ -102,7 +103,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "p.id DESC")
     Page<Product> findFavoriteProducts(Pageable pageable, Set<Long> favoriteIds, String sortBy);
 
-    @Query("SELECT p FROM Product p WHERE p.id IN :favoriteIds AND p.status = true AND p.confirmed = 1" +
+    @Query("SELECT p FROM Product p WHERE p.id IN :favoriteIds AND p.status = true AND p.confirmed = 1 AND p.isDeleted = false " +
             "AND LOWER(p.name) LIKE %:keyword% " +
             "ORDER BY " +
             "CASE WHEN :sortBy = 'az' THEN p.name END ASC, " +
@@ -112,11 +113,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "p.id DESC")
     Page<Product> searchFavoriteProducts(Pageable pageable, Set<Long> favoriteIds, String keyword, String sortBy);
 
-    @Query("SELECT new com.web.model.ProductDTO(p.id, p.name) FROM Product p WHERE p.id IN :favoriteIds AND p.status = true AND p.confirmed = 1")
+    @Query("SELECT new com.web.model.ProductDTO(p.id, p.name) FROM Product p WHERE p.id IN :favoriteIds AND p.status = true AND p.confirmed = 1 AND p.isDeleted = false")
     List<ProductDTO> findAllProductDTOsForFavorites(Set<Long> favoriteIds);
 
     @Query("SELECT p FROM Product p JOIN p.tags t WHERE t IN :tags AND (:id IS NULL OR p.id <> :id) " +
-            "AND (p.confirmed = 1 AND p.status = true)" +
+            "AND (p.confirmed = 1 AND p.status = true AND p.isDeleted = false)" +
             "ORDER BY " +
             "CASE WHEN :sortBy = 'az' THEN COALESCE(p.name, '') ELSE null END ASC, " +
             "CASE WHEN :sortBy = 'za' THEN COALESCE(p.name, '') ELSE null END DESC, " +
@@ -131,7 +132,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findByIdNot(@Param("id") Long id, Pageable pageable);
 
     @Query(value = "SELECT p FROM Product p " +
-            "WHERE (p.createdBy.role != 'ROLE_ADMIN' AND p.status = true) " +
+            "WHERE (p.createdBy.role != 'ROLE_ADMIN' AND p.status = true AND p.isDeleted = false) " +
             "ORDER BY " +
             "CASE WHEN :sortBy = 'az' THEN p.name ELSE null END ASC, " +
             "CASE WHEN :sortBy = 'za' THEN p.name ELSE null END DESC, " +
@@ -141,7 +142,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                                             @Param("sortBy") String sortBy);
 
     @Query(value = "SELECT p FROM Product p " +
-            "WHERE (p.createdBy.role != 'ROLE_ADMIN' AND p.status = true) " +
+            "WHERE (p.createdBy.role != 'ROLE_ADMIN' AND p.status = true AND p.isDeleted = false) " +
             "AND p.name LIKE LOWER(CONCAT('%', :keyword, '%')) " +
             "ORDER BY " +
             "CASE WHEN :sortBy = 'az' THEN p.name ELSE null END ASC, " +
@@ -153,7 +154,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                                         @Param("sortBy") String sortBy);
 
     @Query(value = "SELECT p FROM Product p " +
-            "WHERE (p.createdBy.role = 'ROLE_ADMIN') " +
+            "WHERE (p.createdBy.role = 'ROLE_ADMIN' AND p.isDeleted = false) " +
             "ORDER BY " +
             "CASE WHEN :sortBy = 'az' THEN p.name ELSE null END ASC, " +
             "CASE WHEN :sortBy = 'za' THEN p.name ELSE null END DESC, " +
@@ -163,7 +164,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                                      @Param("sortBy") String sortBy);
 
     @Query(value = "SELECT p FROM Product p " +
-            "WHERE (p.createdBy.role = 'ROLE_ADMIN') " +
+            "WHERE (p.createdBy.role = 'ROLE_ADMIN' AND p.isDeleted = false) " +
             "AND p.name LIKE LOWER(CONCAT('%', :keyword, '%')) " +
             "ORDER BY " +
             "CASE WHEN :sortBy = 'az' THEN p.name ELSE null END ASC, " +
@@ -174,21 +175,21 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                                               @Param("keyword") String keyword,
                                               @Param("sortBy") String sortBy);
 
-    @Query("SELECT p FROM Product p WHERE p.confirmed = :confirmed AND p.status = :status AND p.createdBy.role = :createdByRole ORDER BY p.createdAt DESC LIMIT :limit")
+    @Query("SELECT p FROM Product p WHERE p.confirmed = :confirmed AND p.status = :status AND p.createdBy.role = :createdByRole AND p.isDeleted = false ORDER BY p.createdAt DESC LIMIT :limit")
     List<Product> getProductForHome(@Param("confirmed") Integer confirmed,
                                     @Param("status") Boolean status,
                                     @Param("createdByRole") String createdByRole,
                                     @Param("limit") Integer limit);
 
     @Query("SELECT p FROM Product p JOIN p.tags t WHERE t IN :tags AND (:id IS NULL OR p.id <> :id) " +
-            "AND (p.confirmed = 1 AND p.status = true)" +
+            "AND (p.confirmed = 1 AND p.status = true AND p.isDeleted = false)" +
             "ORDER BY p.createdAt DESC " +
             "LIMIT 12")
     List<Product> getMoreProducts(@Param("tags") List<Tag> tags,
                                   @Param("id") Long id);
 
     @Query("SELECT p FROM Product p JOIN p.tags t WHERE t.name = :tagName " +
-            "AND p.confirmed = 1 AND p.status = true " +
+            "AND p.confirmed = 1 AND p.status = true AND p.isDeleted = false " +
             "ORDER BY " +
             "CASE WHEN :sortBy = 'az' THEN p.name ELSE null END ASC, " +
             "CASE WHEN :sortBy = 'za' THEN p.name ELSE null END DESC, " +
@@ -199,7 +200,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                                       @Param("sortBy") String sortBy);
 
     @Query("SELECT p FROM Product p " +
-            "WHERE p.confirmed = :confirmed AND p.status = :status AND p.createdBy.userId = :createdByUserId " +
+            "WHERE p.confirmed = :confirmed AND p.status = :status AND p.createdBy.userId = :createdByUserId AND p.isDeleted = false " +
             "ORDER BY " +
             "CASE WHEN :sortBy = 'az' THEN p.name ELSE null END ASC, " +
             "CASE WHEN :sortBy = 'za' THEN p.name ELSE null END DESC, " +
@@ -208,7 +209,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> getProductsByUserId(Pageable pageable, Integer confirmed, Boolean status, Long createdByUserId, @Param("sortBy") String sortBy);
 
     @Query("SELECT p FROM Product p " +
-            "WHERE p.confirmed = :confirmed AND p.status = :status AND p.createdBy.userId = :createdByUserId " +
+            "WHERE p.confirmed = :confirmed AND p.status = :status AND p.createdBy.userId = :createdByUserId AND p.isDeleted = false " +
             "AND (LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
             "ORDER BY " +
             "CASE WHEN :sortBy = 'az' THEN p.name ELSE null END ASC, " +
@@ -217,6 +218,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "CASE WHEN :sortBy = '' OR :sortBy = 'new' OR :sortBy IS NULL THEN p.id ELSE null END DESC")
     Page<Product> searchProductsByUserId(Pageable pageable, Integer confirmed, Boolean status, Long createdByUserId, @Param("sortBy") String sortBy, @Param("keyword") String keyword);
 
-    @Query("SELECT new com.web.model.ProductDTO(p.id, p.name) FROM Product p WHERE p.confirmed = :confirmed AND p.status = :status AND p.createdBy.userId = :createdByUserId")
+    @Query("SELECT new com.web.model.ProductDTO(p.id, p.name) FROM Product p WHERE p.confirmed = :confirmed AND p.status = :status AND p.createdBy.userId = :createdByUserId AND p.isDeleted = false")
     List<ProductDTO> getProductDTOsByUserId(Integer confirmed, Boolean status, Long createdByUserId);
+
+    Optional<Product> findByIdAndIsDeleted(Long id, Boolean isDeleted);
 }

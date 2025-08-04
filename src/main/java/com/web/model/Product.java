@@ -41,6 +41,9 @@ public class Product {
 
     private Boolean isAcceptAdmin = false;
 
+    @Column(nullable = false)
+    private Boolean isDeleted = false;
+
     @ElementCollection
     @CollectionTable(name = "product_image_files",
             joinColumns = @JoinColumn(name = "product_id"))

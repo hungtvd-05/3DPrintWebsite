@@ -12,4 +12,5 @@ public interface CartService {
     List<CartItemDTO> getCartWithProducts(Long userId);
     Boolean updateQuantity(Long cartId, Integer newQuantity);
     Boolean deleteCartItem(Long cartId);
+    Double calculateTotalPrice(List<CartItemDTO> cartItems);
 }

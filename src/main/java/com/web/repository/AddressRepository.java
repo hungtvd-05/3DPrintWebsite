@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface AddressRepository extends JpaRepository<Address, Long> {
     List<Address> findByUserId(Long userId);
@@ -15,4 +16,8 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
     @Transactional
     @Query("UPDATE Address a SET a.isDefault = false WHERE a.userId = :userId")
     void updateIsDefaultByUserId(Long userId);
+
+    Optional<Address> findByUserIdAndIsDefault(Long userId, Boolean isDefault);
+
+    Address findFirstByUserId(Long userId);
 }

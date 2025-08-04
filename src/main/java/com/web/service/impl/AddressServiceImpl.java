@@ -1,6 +1,7 @@
 package com.web.service.impl;
 
 import com.web.model.Address;
+import com.web.model.CartItemDTO;
 import com.web.repository.AddressRepository;
 import com.web.service.AddressService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,15 @@ public class AddressServiceImpl implements AddressService {
             addressRepository.updateIsDefaultByUserId(address.getUserId());
         }
         return addressRepository.save(address);
+    }
+
+    @Override
+    public void deleteAddress(Address address) {
+        try {
+            addressRepository.delete(address);
+        } catch (Exception e) {
+
+        }
     }
 
     @Override
@@ -59,5 +69,10 @@ public class AddressServiceImpl implements AddressService {
         return addressRepository.findById(addressId).orElse(null);
     }
 
+    @Override
+    public Address getDefaultAddress(Long userId) {
+        return addressRepository.findByUserIdAndIsDefault(userId, true)
+                .orElse(addressRepository.findFirstByUserId(userId));
+    }
 
 }

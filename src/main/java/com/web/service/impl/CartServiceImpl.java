@@ -59,9 +59,28 @@ public class CartServiceImpl implements CartService {
 
         Map<Long, Product> products = productRepository.findAllById(productIds)
                 .stream()
+                .filter(product -> !product.getIsDeleted() && product.getStatus() && product.getConfirmed() == 1)
                 .collect(Collectors.toMap(Product::getId, p -> p));
 
-        return carts.stream()
+        // Tách cart items thành hợp lệ và không hợp lệ
+        Map<Boolean, List<Cart>> partitionedCarts = carts.stream()
+                .collect(Collectors.partitioningBy(
+                        cart -> products.containsKey(cart.getProductId())
+                ));
+
+        List<Cart> validCarts = partitionedCarts.get(true);
+        List<Cart> invalidCarts = partitionedCarts.get(false);
+
+        // Batch delete các cart items không hợp lệ
+        if (!invalidCarts.isEmpty()) {
+            List<Long> invalidCartIds = invalidCarts.stream()
+                    .map(Cart::getId)
+                    .collect(Collectors.toList());
+            cartRepository.deleteAllById(invalidCartIds);
+        }
+
+        // Trả về các cart items hợp lệ
+        return validCarts.stream()
                 .map(cart -> new CartItemDTO(
                         cart,
                         products.get(cart.getProductId())
@@ -104,5 +123,13 @@ public class CartServiceImpl implements CartService {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    @Override
+    public Double calculateTotalPrice(List<CartItemDTO> cartItems) {
+
+        return cartItems.stream()
+                .mapToDouble(item -> item.getPrice() * item.getQuantity())
+                .sum();
     }
 }

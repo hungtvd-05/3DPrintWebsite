@@ -34,9 +34,6 @@ public class ProductServiceImpl implements ProductService {
     private TagRepository tagRepository;
 
     @Autowired
-    private UserRepository usertRepository;
-
-    @Autowired
     private CommentService commentService;
 
     @Autowired
@@ -116,7 +113,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public void deleteProduct(Long id) {
-        Product product = productRepository.findById(id).orElse(null);
+        Product product = productRepository.findByIdAndIsDeleted(id, false).orElse(null);
 
         if (product != null) {
             commentService.deleteByCreatedOn(product);
@@ -136,7 +133,8 @@ public class ProductServiceImpl implements ProductService {
                     imgFile.delete();
                 }
             }
-            productRepository.delete(product);
+            product.setIsDeleted(true);
+            productRepository.save(product);
         } else {
             throw new RuntimeException("Product not found with id: " + id);
         }
@@ -145,15 +143,14 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public Product getProductById(Long id) {
-        return productRepository.findById(id).orElse(null);
+        return productRepository.findByIdAndIsDeleted(id, false).orElse(null);
     }
 
     @Override
     @Transactional
     public Product updateProduct(Product new_product) {
 
-        Product product = productRepository.findById(new_product.getId())
-                .orElseThrow(() -> new RuntimeException("Product not found with id: " + new_product.getId()));
+        Product product = productRepository.findByIdAndIsDeleted(new_product.getId(), false).orElse(null);
 
         List<Tag> processedTags = new ArrayList<>();
         for (Tag tag : new_product.getTags()) {
@@ -267,7 +264,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public Product confirmProduct(Long id, String action) {
 
-        Product product = productRepository.findById(id).orElse(null);
+        Product product = productRepository.findByIdAndIsDeleted(id, false).orElse(null);
 
         if (product == null) {
             return null;
