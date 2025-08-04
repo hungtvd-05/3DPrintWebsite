@@ -25,9 +25,11 @@ replay_pid*
 
 # Secrets
 src/main/resources/application-secrets.properties
-src/main/resources/static/product
-src/main/resources/static/img/ckeditor_img
-src/main/resources/static/tmp
+src/main/resources/static/product/img/
+src/main/resources/static/product/stl/
+src/main/resources/static/img/ckeditor_img/
+src/main/resources/static/tmp/img/
+src/main/resources/static/tmp/stl/
 
 # Maven
 HELP.md
