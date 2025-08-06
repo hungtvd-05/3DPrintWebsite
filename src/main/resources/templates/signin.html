@@ -8,10 +8,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
           integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
-          crossorigin="anonymous" referrerpolicy="no-referrer" />
+          crossorigin="anonymous" referrerpolicy="no-referrer"/>
     <link rel="stylesheet" th:href="@{/css/styles.min.css}"/>
-    <link rel="icon" type="image/x-icon" th:href="@{'/img/logos/' + ${webInfo.logo}}">
-    <title>Admin</title>
+    <link rel="icon" type="image/x-icon" th:href="@{'/img/logo/' + ${webInfo.logo}}">
+    <title>Login</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Modak&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+          rel="stylesheet">
 </head>
 <body>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
@@ -20,7 +25,22 @@
 <script th:src="@{/js/app.min.js}"></script>
 <script th:src="@{/libs/apexcharts/dist/apexcharts.min.js}"></script>
 <script th:src="@{/libs/simplebar/dist/simplebar.js}"></script>
-<div class="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
+
+<style>
+    .modak-regular {
+        font-family: "Modak", system-ui;
+        /*font-weight: 200;*/
+        /*font-style: normal;*/
+    }
+
+    .space-mono-regular {
+        font-family: "Space Mono", monospace;
+        font-weight: 400;
+        font-style: normal;
+    }
+</style>
+
+<div class="page-wrapper space-mono-regular" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
      data-sidebar-position="fixed" data-header-position="fixed">
     <div
             class="position-relative overflow-hidden radial-gradient min-vh-100 d-flex align-items-center justify-content-center">
@@ -29,9 +49,11 @@
                 <div class="col-md-8 col-lg-6 col-xxl-3">
                     <div class="card mb-0">
                         <div class="card-body">
-                            <a href="/" class="text-nowrap logo-img text-center d-block pb-3 w-100">
-                                <img th:src="@{'/img/logos/' + ${webInfo.logo}}" height="100" alt="">
-                            </a>
+                            <div class="text-center">
+                                <a class="p-0 modak-regular" href="/"
+                                   style="height: 45px; font-size: 30px; color: rgb(20, 119, 209)"
+                                   th:text="${webInfo.name}"></a>
+                            </div>
                             <h4 class="text-center">Đăng nhập</h4>
                             <div th:if="${param.error}" class="text-danger text-center">
 
@@ -41,20 +63,22 @@
 
                             </div>
                             <div th:if="${param.logout}" class="text-success text-center">
-                                Đã đăng suất</div>
+                                Đã đăng suất
+                            </div>
                             <form action="/login" method="post">
                                 <div class="mb-3">
                                     <label class="form-label" for="email">Email</label>
                                     <input class="form-control" name="username" type="email" id="email">
                                 </div>
-                                <div class="mb-4">
+                                <div class="mb-3">
                                     <label class="form-label" for="password">Mật khẩu</label>
                                     <input class="form-control" name="password" type="password" id="password">
                                 </div>
-                                <button type="submit" class="btn bg-primary text-white mb-4">Đăng nhập</button>
+                                <button type="submit" class="btn bg-primary text-white mb-2 w-100">Đăng nhập</button>
                                 <div class="text-center">
                                     <a href="/forgot-password" class="text-decoration-none">Quên mật khẩu</a> <br>
-                                    Bạn không có tài khoản? <a href="/signup" class="text-decoration-none">Tạo tài khoản</a>
+                                    Bạn không có tài khoản? <a href="/signup" class="text-decoration-none">Tạo tài
+                                    khoản</a>
                                 </div>
                             </form>
                         </div>

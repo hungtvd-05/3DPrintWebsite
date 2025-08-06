@@ -199,7 +199,7 @@ public class AdminController {
                                  @RequestParam(name = "page", defaultValue = "1") Integer pageNumber,
                                  @RequestParam(value = "sorted", defaultValue = "") String sorted,
                                  @RequestParam(value = "search", defaultValue = "") String search,
-                                 @RequestParam(name = "pageSize", defaultValue = "36") Integer pageSize) {
+                                 @RequestParam(name = "pageSize", defaultValue = "24") Integer pageSize) {
 
         Page<Product> page = productService.getAllProductsPaginationOfAdmin(pageNumber - 1, pageSize, sorted, search);
         m.addAttribute("products", page.getContent());
@@ -343,7 +343,7 @@ public class AdminController {
                                      @RequestParam(name = "page", defaultValue = "1") Integer pageNumber,
                                      @RequestParam(value = "sorted", defaultValue = "") String sorted,
                                      @RequestParam(value = "search", defaultValue = "") String search,
-                                     @RequestParam(name = "pageSize", defaultValue = "36") Integer pageSize) {
+                                     @RequestParam(name = "pageSize", defaultValue = "24") Integer pageSize) {
 
         Page<Product> page = productService.getAllProductsPaginationOfUser(pageNumber - 1, pageSize, sorted, search);
         m.addAttribute("products", page.getContent());
@@ -639,7 +639,7 @@ public class AdminController {
                                 @RequestParam(name = "page", defaultValue = "1") Integer pageNumber,
                                 @RequestParam(value = "sorted", defaultValue = "") String sorted,
                                 @RequestParam(value = "search", defaultValue = "") String search,
-                                @RequestParam(name = "pageSize", defaultValue = "36") Integer pageSize) {
+                                @RequestParam(name = "pageSize", defaultValue = "24") Integer pageSize) {
 
         UserAccount user = userService.getCurrentUserAccount();
 

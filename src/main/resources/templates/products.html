@@ -235,7 +235,7 @@
             </div>
             <th:block th:if="${products.size() > 0}">
 
-                <div class="row">
+                <div class="row mb-3">
                     <a th:href="@{/product:{id}(id=${pro.id})}" class="col-xxl-2 col-xl-3 col-lg-4 col-6" style="padding: 12px"
                        th:each="pro, p:${products}">
                         <div class="product-card">

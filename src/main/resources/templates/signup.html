@@ -11,7 +11,12 @@
           crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" th:href="@{/css/styles.min.css}"/>
     <link rel="icon" type="image/x-icon" th:href="@{'/img/logos/' + ${webInfo.logo}}">
-    <title>Admin</title>
+    <title>Signup</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Modak&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+          rel="stylesheet">
 </head>
 <body>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
@@ -34,8 +39,20 @@
         background: none;
         cursor: pointer;
     }
+
+    .modak-regular {
+        font-family: "Modak", system-ui;
+        /*font-weight: 200;*/
+        /*font-style: normal;*/
+    }
+
+    .space-mono-regular {
+        font-family: "Space Mono", monospace;
+        font-weight: 400;
+        font-style: normal;
+    }
 </style>
-<div class="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
+<div class="page-wrapper space-mono-regular" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full"
      data-sidebar-position="fixed" data-header-position="fixed">
     <div
             class="position-relative overflow-hidden radial-gradient min-vh-100 d-flex align-items-center justify-content-center">
@@ -44,9 +61,11 @@
                 <div class="col-md-8 col-lg-6 col-xxl-3">
                     <div class="card mb-0">
                         <div class="card-body">
-                            <a href="/" class="text-nowrap logo-img text-center d-block pb-3 w-100">
-                                <img th:src="@{'/img/logos/' + ${webInfo.logo}}" height="100" alt="">
-                            </a>
+                            <div class="text-center">
+                                <a class="p-0 modak-regular" href="/"
+                                   style="height: 45px; font-size: 30px; color: rgb(20, 119, 209)"
+                                   th:text="${webInfo.name}"></a>
+                            </div>
                             <div class="text-center">
                                 <h4>Đăng ký</h4>
                                 <th:block th:if="${session.succMsg}">
@@ -98,7 +117,7 @@
                                     </ul>
                                 </div>
                                 <span id="errorMessage" class="font-weight-bold text-danger"></span>
-                                <div class="mb-4">
+                                <div class="mb-3">
                                     <label class="form-label" for="confirmpassword">Xác nhận mật khẩu</label>
                                     <div class="password-container">
                                         <input class="form-control" name="cpassword" type="password" id="confirmpassword" required>
@@ -107,7 +126,7 @@
                                         </button>
                                     </div>
                                 </div>
-                                <button type="submit" id="submit-button" class="btn bg-primary text-white mb-4 form-control">Đăng ký</button>
+                                <button type="submit" id="submit-button" class="btn bg-primary text-white mb-2 form-control">Đăng ký</button>
                                 <div class="text-center">
                                     Bạn đã có tài khoản? <a href="/signin" class="text-decoration-none">Đăng nhập</a>
                                 </div>

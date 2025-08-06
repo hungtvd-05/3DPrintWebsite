@@ -236,7 +236,7 @@ public class HomeController {
                                @RequestParam(name = "page", defaultValue = "1") Integer pageNumber,
                                @RequestParam(value = "sorted", defaultValue = "") String sorted,
                                @RequestParam(value = "search", defaultValue = "") String search,
-                               @RequestParam(name = "pageSize", defaultValue = "36") Integer pageSize) {
+                               @RequestParam(name = "pageSize", defaultValue = "24") Integer pageSize) {
         Page<Product> page = productService.getAllProducts(pageNumber - 1, pageSize, sorted, search);
         m.addAttribute("products", page.getContent());
         m.addAttribute("sorted", sorted);
@@ -258,7 +258,7 @@ public class HomeController {
                                @RequestParam(name = "page", defaultValue = "1") Integer pageNumber,
                                @RequestParam(value = "sorted", defaultValue = "") String sorted,
                                @RequestParam(value = "search", defaultValue = "") String search,
-                               @RequestParam(name = "pageSize", defaultValue = "36") Integer pageSize) {
+                               @RequestParam(name = "pageSize", defaultValue = "24") Integer pageSize) {
         Page<Product> page = productService.getAllProductsByRole(pageNumber - 1, pageSize, sorted, search, "ROLE_ADMIN");
         m.addAttribute("products", page.getContent());
         m.addAttribute("sorted", sorted);
@@ -280,7 +280,7 @@ public class HomeController {
                                     @RequestParam(name = "page", defaultValue = "1") Integer pageNumber,
                                     @RequestParam(value = "sorted", defaultValue = "") String sorted,
                                     @RequestParam(value = "search", defaultValue = "") String search,
-                                    @RequestParam(name = "pageSize", defaultValue = "36") Integer pageSize) {
+                                    @RequestParam(name = "pageSize", defaultValue = "24") Integer pageSize) {
         Page<Product> page = productService.getAllProductsByRole(pageNumber - 1, pageSize, sorted, search, "ROLE_USER");
         m.addAttribute("products", page.getContent());
         m.addAttribute("sorted", sorted);
@@ -367,7 +367,7 @@ public class HomeController {
     public String viewTag(@PathVariable("tagName") String tagName, Model m,
                           @RequestParam(name = "page", defaultValue = "1") Integer pageNumber,
                           @RequestParam(value = "sorted", defaultValue = "") String sorted,
-                          @RequestParam(name = "pageSize", defaultValue = "36") Integer pageSize) {
+                          @RequestParam(name = "pageSize", defaultValue = "24") Integer pageSize) {
         Page<Product> page = productService.getAllProductByTag(pageNumber - 1, pageSize, sorted, tagName);
         m.addAttribute("tagName", tagName);
         m.addAttribute("products", page.getContent());
@@ -387,7 +387,7 @@ public class HomeController {
                               @RequestParam(value = "sorted", defaultValue = "") String sorted,
                               @RequestParam(value = "search", defaultValue = "") String search,
                               @RequestParam(name = "page", defaultValue = "1") Integer pageNumber,
-                              @RequestParam(name = "pageSize", defaultValue = "36") Integer pageSize,
+                              @RequestParam(name = "pageSize", defaultValue = "24") Integer pageSize,
                               Model m) {
         UserAccount userAccount = userService.getUserAccountById(id);
         if (ObjectUtils.isEmpty(userAccount)) {
@@ -415,7 +415,7 @@ public class HomeController {
                               @RequestParam(value = "sorted", defaultValue = "") String sorted,
                               @RequestParam(value = "search", defaultValue = "") String search,
                               @RequestParam(name = "page", defaultValue = "1") Integer pageNumber,
-                              @RequestParam(name = "pageSize", defaultValue = "36") Integer pageSize,
+                              @RequestParam(name = "pageSize", defaultValue = "24") Integer pageSize,
                               Model m) {
         UserAccount userAccount = userService.getUserAccountById(id);
         if (ObjectUtils.isEmpty(userAccount)) {

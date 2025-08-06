@@ -98,7 +98,7 @@ public class UserController {
                              @RequestParam(name = "page", defaultValue = "1") Integer pageNumber,
                              @RequestParam(value = "sorted", defaultValue = "") String sorted,
                              @RequestParam(value = "search", defaultValue = "") String search,
-                             @RequestParam(name = "pageSize", defaultValue = "36") Integer pageSize) {
+                             @RequestParam(name = "pageSize", defaultValue = "24") Integer pageSize) {
 
         UserAccount userAccount = userService.getCurrentUserAccount();
 
@@ -273,7 +273,7 @@ public class UserController {
                                     @RequestParam(name = "page", defaultValue = "1") Integer pageNumber,
                                     @RequestParam(value = "sorted", defaultValue = "") String sorted,
                                     @RequestParam(value = "search", defaultValue = "") String search,
-                                    @RequestParam(name = "pageSize", defaultValue = "36") Integer pageSize) {
+                                    @RequestParam(name = "pageSize", defaultValue = "24") Integer pageSize) {
 
         UserAccount user = userService.getCurrentUserAccount();
 

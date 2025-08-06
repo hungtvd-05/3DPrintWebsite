@@ -815,7 +815,7 @@ class NotificationManager {
                 if (notification.type === 'new_comment' || notification.type === 'new_reply') {
                     window.location.href = `/product:${notification.contentId}/comments`;
                 } else if (notification.type === 'new_product_approval') {
-                    window.location.href = `/admin/product-of-user/product:${notification.contentId}`;
+                    window.location.href = `/admin/view_product_confirm:${notification.contentId}`;
                 } else if (notification.type === 'product_approved' || notification.type === 'product_rejected') {
                     window.location.href = `/user/edit-product:${notification.contentId}`;
                 } else if (notification.type === 'new_order') {
