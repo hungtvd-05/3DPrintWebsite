@@ -56,7 +56,11 @@ public class WebInfoServiceImpl implements WebInfoService {
     @Override
     @Transactional
     public WebInfo getWebInfo() {
-        return webInfoRepository.findFirstByOrderByIdAsc();
+        WebInfo webInfo = webInfoRepository.findFirstByOrderByIdAsc();
+        if (webInfo != null) {
+            webInfo.getAttributes().size();
+        }
+        return webInfo;
     }
 
     @Override

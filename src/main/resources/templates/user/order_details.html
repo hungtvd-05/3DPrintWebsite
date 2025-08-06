@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{base::layout(~{::section})}">>
+<head>
+    <meta charset="UTF-8">
+    <title>Chi tiết đơn hàng</title>
+</head>
+<body>
+<section>
+    <style>
+        .order-detail-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .order-header {
+            background: linear-gradient(135deg, #0093E9 0%, #80D0C7 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .order-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .order-subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin: 0;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-top: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .info-card h5 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-weight: 600;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 8px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px 0;
+        }
+
+        .info-label {
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: #495057;
+            font-weight: 600;
+        }
+
+        .products-section {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .products-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .products-header h5 {
+            margin: 0;
+            color: #495057;
+            font-weight: 600;
+        }
+
+        .product-item {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            transition: background-color 0.2s ease;
+        }
+
+        .product-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .product-item:last-child {
+            border-bottom: none;
+        }
+
+        .product-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-right: 15px;
+            border: 1px solid #e9ecef;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-name {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 5px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.4;
+        }
+
+        .product-details {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .product-price {
+            text-align: right;
+            min-width: 120px;
+        }
+
+        .unit-price {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .total-price {
+            color: #28a745;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .order-summary {
+            background: #f8f9fa;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .summary-total {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #28a745;
+            border-top: 2px solid #dee2e6;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+
+        .back-button {
+            background: linear-gradient(135deg, #0093E9 0%, #80D0C7 100%);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 20px;
+            transition: transform 0.2s ease;
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        .back-button i {
+            margin-right: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .order-detail-container {
+                padding: 15px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .product-item {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .product-image {
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+
+            .product-price {
+                text-align: center;
+                min-width: auto;
+                margin-top: 10px;
+            }
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .btn-cancel {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-cancel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+            color: white;
+        }
+
+        .btn-cancel:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-cancel i {
+            margin-right: 8px;
+        }
+
+        .btn-reorder {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-reorder:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+            color: white;
+        }
+
+        .btn-reorder i {
+            margin-right: 8px;
+        }
+    </style>
+
+    <div class="order-detail-container">
+        <!-- Back Button -->
+        <a href="/user/orders" class="back-button">
+            <i class="fas fa-arrow-left"></i>
+            Quay lại danh sách đơn hàng
+        </a>
+
+        <!-- Order Header -->
+        <div class="order-header">
+            <h1 class="order-title">Đơn hàng #[[${order.orderId}]]</h1>
+            <p class="order-subtitle" th:if="${order.createdAt}">
+                Đặt hàng ngày [[${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}]]
+            </p>
+            <span class="status-badge" th:text="${order.status}"></span>
+        </div>
+
+        <!-- Order Information Grid -->
+        <div class="info-grid">
+            <!-- Delivery Information -->
+            <div class="info-card">
+                <h5><i class="fas fa-shipping-fast me-2"></i>Thông tin giao hàng</h5>
+                <div class="info-item" th:if="${order.receiverName}">
+                    <span class="info-label">Người nhận:</span>
+                    <span class="info-value" th:text="${order.receiverName}"></span>
+                </div>
+                <div class="info-item" th:if="${order.phoneNumber}">
+                    <span class="info-label">Điện thoại:</span>
+                    <span class="info-value" th:text="${order.phoneNumber}"></span>
+                </div>
+                <div class="info-item" th:if="${order.detailAddress}">
+                    <span class="info-label">Địa chỉ:</span>
+                    <span class="info-value" th:text="${order.detailAddress}"></span>
+                </div>
+            </div>
+
+            <!-- Payment Information -->
+            <div class="info-card">
+                <h5><i class="fas fa-credit-card me-2"></i>Thông tin thanh toán</h5>
+                <div class="info-item" th:if="${order.paymentMethod}">
+                    <span class="info-label">Phương thức:</span>
+                    <span class="info-value" th:text="${order.paymentMethod}"></span>
+                </div>
+                <div class="info-item" th:if="${order.totalAmount}">
+                    <span class="info-label">Tổng tiền:</span>
+                    <span class="info-value total-price"
+                          th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT') + ' VND'}"></span>
+                </div>
+                <div class="info-item" th:if="${order.note}">
+                    <span class="info-label">Ghi chú:</span>
+                    <span class="info-value" th:text="${order.note}"></span>
+                </div>
+            </div>
+        </div>
+
+        Products Section
+        <div class="products-section">
+            <div class="products-header">
+                <h5><i class="fas fa-box me-2"></i>Sản phẩm đã đặt ([[${order.orderItems.size()}]] sản phẩm)</h5>
+            </div>
+
+            <!-- Product Items -->
+            <div th:each="item : ${order.orderItems}" class="product-item">
+                <img th:src="@{'/product/img/' + ${item.product.imageFiles.iterator().next()}}"
+                     alt="Product Image"
+                     class="product-image"
+                     onerror="this.src='/img/no-image.png'">
+
+                <div class="product-info">
+                    <div class="product-name" th:text="${item.product.name}"></div>
+                    <div class="product-details">
+                        Số lượng: <strong th:text="${item.quantity}"></strong>
+                    </div>
+                </div>
+
+                <div class="product-price">
+                    <div class="unit-price"
+                         th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT') + ' VND'} + '/sp'"></div>
+                    <div class="total-price"
+                         th:text="${#numbers.formatDecimal(item.price * item.quantity, 0, 'COMMA', 0, 'POINT') + ' VND'}"></div>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="order-summary">
+                <div class="summary-row">
+                    <span>Tạm tính:</span>
+                    <span th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT') + ' VND'}"></span>
+                </div>
+                <div class="summary-row">
+                    <span>Phí vận chuyển:</span>
+                    <span>Miễn phí</span>
+                </div>
+                <div class="summary-row summary-total">
+                    <span>Tổng cộng:</span>
+                    <span th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT') + ' VND'}"></span>
+                </div>
+            </div>
+        </div>
+        <div class="order-actions">
+            <!-- Nút đặt lại -->
+            <button class="btn-reorder" onclick="reorderItems(this.getAttribute('data-order-id'))" th:data-order-id="${order.orderId}">
+                <i class="fas fa-redo"></i>
+                Đặt lại đơn hàng
+            </button>
+
+            <!-- Nút hủy đơn - chỉ hiển thị khi đơn hàng có thể hủy -->
+            <button th:if="${order.status == 'Đơn hàng đang được xử lí!' || order.status == 'Đã xác nhận đơn hàng!'}"
+                    class="btn-cancel"
+                    th:data-order-id="${order.orderId}"
+                    onclick="confirmCancelOrder(this.getAttribute('data-order-id'))">
+                <i class="fas fa-times"></i>
+                Hủy đơn hàng
+            </button>
+        </div>
+    </div>
+    <script>
+        function confirmCancelOrder(orderId) {
+            if (confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?')) {
+                cancelOrder(orderId);
+            }
+        }
+
+        function cancelOrder(orderId) {
+            const formData = new FormData();
+            formData.append('orderId', orderId);
+
+            console.log(orderId);
+
+            fetch('/user/cancel-order', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Hủy đơn hàng thành công!');
+                        location.reload(); // Tải lại trang để cập nhật trạng thái
+                    } else {
+                        alert('Lỗi: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra khi hủy đơn hàng!');
+                });
+        }
+
+        function reorderItems(orderId) {
+            if (confirm('Bạn có muốn thêm tất cả sản phẩm trong đơn hàng này vào giỏ hàng không?')) {
+
+                const formData = new FormData();
+                formData.append('orderId', orderId);
+
+                console.log(orderId);
+
+                fetch('/user/reorder', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Đã thêm sản phẩm vào giỏ hàng!');
+                            window.location.href = '/user/cart';
+                        } else {
+                            alert('Lỗi: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Có lỗi xảy ra!');
+                    });
+            }
+        }
+    </script>
+</section>
+</body>
+</html>

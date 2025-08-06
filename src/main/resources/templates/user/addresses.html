@@ -103,9 +103,9 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
+                body: {
                     addressId: addressId
-                })
+                }
             })
                 .then(response => response.json())
                 .then(data => {

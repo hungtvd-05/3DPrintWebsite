@@ -131,7 +131,7 @@ public class ApiController {
         Product product = productService.getProductById(productId);
 
         Map<String, Object> notification = new HashMap<>();
-        notification.put("productId", product.getId());
+        notification.put("contentId", product.getId());
         notification.put("content", content);
         notification.put("parentCommentId", parentCommentId);
         Map<String, Object> userInfo = new HashMap<>();
@@ -208,6 +208,8 @@ public class ApiController {
             notification.put("type", "new_comment");
             notification.put("notificationKey", notificationKey);
 
+            messagingTemplate.convertAndSend("/topic/product/" + product.getId(), notification);
+
             if (!productOwner.getUserId().equals(currentUser.getUserId())) {
 
                 notificationService.saveAndSendNotification(
@@ -219,8 +221,6 @@ public class ApiController {
                         savedComment.getCreatedAt(),
                         notificationKey
                 );
-
-                messagingTemplate.convertAndSend("/topic/product/" + product.getId(), notification);
 
                 messagingTemplate.convertAndSendToUser(
                         String.valueOf(productOwner.getUserId()),
@@ -251,7 +251,7 @@ public class ApiController {
                         notif.put("id", n.getId());
                         notif.put("type", n.getType());
                         notif.put("content", n.getContent());
-                        notif.put("productId", n.getProductId());
+                        notif.put("contentId", n.getContentId());
                         notif.put("createdAt", n.getCreatedAt().toString());
                         notif.put("notificationKey", n.getNotificationKey());
 
@@ -789,7 +789,7 @@ public class ApiController {
             Map<String, Object> notification = new HashMap<>();
             notification.put("id", System.currentTimeMillis()); // Temporary ID
             notification.put("type", "new_product_approval");
-            notification.put("productId", product.getId());
+            notification.put("contentId", product.getId());
             notification.put("content", message);
             notification.put("createdAt", LocalDateTime.now().toString());
             notification.put("notificationKey", notificationKey + "_" + admin.getUserId());

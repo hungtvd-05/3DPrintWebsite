@@ -368,22 +368,22 @@
                             <a class="nav-link text-white position-relative" href="#" role="button"
                                id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="ti ti-bell-filled fs-4"></i>
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                                      id="notificationBadge" style="display: none;">0</span>
+                                <span class="position-absolute translate-middle badge rounded-pill bg-danger"
+                                      id="notificationBadge" style="display: none; left: 95%; top:15%; padding: 5px">0</span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end notification-dropdown"
                                 aria-labelledby="notificationDropdown"
                                 style="width: 350px; max-height: 400px; overflow-y: auto;">
                                 <li><h6 class="dropdown-header">Thông báo</h6></li>
                                 <li>
-                                    <hr class="dropdown-divider">
+                                    <hr class="dropdown-divider m-0">
                                 </li>
                                 <li class="px-3 text-center text-muted" id="noNotifications">
                                     <small>Không có thông báo nào</small>
                                 </li>
                                 <div id="notificationList"></div>
                                 <li>
-                                    <hr class="dropdown-divider">
+                                    <hr class="dropdown-divider m-0">
                                 </li>
                                 <li class="text-center">
                                     <a class="dropdown-item small" href="#" id="markAllRead">Đánh dấu tất cả đã đọc</a>
@@ -409,7 +409,7 @@
                                 <li><a class="dropdown-item" href="/user/my-products">Thiết kế của tôi</a></li>
                                 <li><a class="dropdown-item" href="/user/favorites">Yêu thích</a></li>
                                 <li><a class="dropdown-item" href="/user/addresses">Địa chỉ của tôi</a></li>
-                                <li><a class="dropdown-item" href="/user/don-hang">Đơn hàng của tôi</a></li>
+                                <li><a class="dropdown-item" href="/user/orders">Đơn hàng của tôi</a></li>
                                 <li><a class="dropdown-item" href="/logout"><i class="ti ti-logout"></i> Đăng xuất</a>
                                 </li>
                             </ul>
@@ -417,6 +417,9 @@
                     </th:block>
 
                     <th:block th:unless="${user.role == 'ROLE_USER'}">
+                        <div th:data-user-id="${user?.userId}"
+                             th:data-user-role="${user?.role}"
+                             style="display: none;"></div>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle active text-white" href="#" role="button"
                                data-bs-toggle="dropdown" aria-expanded="false">
@@ -424,7 +427,7 @@
                             </a>
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="/admin/profile">Profile</a></li>
-                                <li><a class="dropdown-item" href="/admin">Admin</a></li>
+                                <li><a class="dropdown-item" href="/admin/products">Admin</a></li>
                                 <li><a class="dropdown-item" href="/admin/favorites">Yêu thích</a></li>
                                 <li><a class="dropdown-item" href="/logout"><i class="ti ti-logout"></i> Đăng xuất</a>
                                 </li>

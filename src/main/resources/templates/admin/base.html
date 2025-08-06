@@ -121,6 +121,9 @@
 <script th:src="@{/libs/simplebar/dist/simplebar.js}"></script>
 <script src="/js/NotificationManager.js"></script>
 <div th:if="${user != null}" th:data-user-id="${user.userId}" style="display: none;"></div>
+<div th:data-user-id="${user?.userId}"
+     th:data-user-role="${user?.role}"
+     style="display: none;" th:if="${user?.role == 'ROLE_ADMIN'}"></div>
 <div class="page-wrapper space-mono-regular" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6"
      data-sidebartype="full"
      data-sidebar-position="fixed" data-header-position="fixed">
@@ -138,14 +141,6 @@
                     <li class="nav-small-cap">
                         <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
                         <span class="hide-menu">Home</span>
-                    </li>
-                    <li class="sidebar-item">
-                        <a class="sidebar-link" href="/admin" aria-expanded="false">
-                            <span>
-                              <i class="ti ti-layout-dashboard"></i>
-                            </span>
-                            <span class="hide-menu">Dashboard</span>
-                        </a>
                     </li>
                     <li class="sidebar-item">
                         <a class="sidebar-link" href="/admin/products" aria-expanded="false">
@@ -180,19 +175,11 @@
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a class="sidebar-link" href="/admin/don-hang" aria-expanded="false">
+                        <a class="sidebar-link" href="/admin/orders" aria-expanded="false">
                             <span>
                                 <i class="ti ti-truck-delivery"></i>
                             </span>
                             <span class="hide-menu">Đơn hàng</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-item">
-                        <a class="sidebar-link" href="/admin/danh-gia" aria-expanded="false">
-                            <span>
-                                <i class="ti ti-message"></i>
-                            </span>
-                            <span class="hide-menu">Đánh giá</span>
                         </a>
                     </li>
                     <li class="sidebar-item">
@@ -251,22 +238,22 @@
                                    role="button"
                                    id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                     <i class="ti ti-bell-filled fs-5"></i>
-                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                                          id="notificationBadge" style="display: none;">0</span>
+                                    <span class="position-absolute translate-middle badge rounded-pill bg-danger"
+                                          id="notificationBadge" style="display: none; left: 75%; top:30%; padding: 5px">0</span>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end notification-dropdown"
                                     aria-labelledby="notificationDropdown"
                                     style="width: 350px; max-height: 400px; overflow-y: auto;">
                                     <li><h6 class="dropdown-header">Thông báo</h6></li>
                                     <li>
-                                        <hr class="dropdown-divider">
+                                        <hr class="dropdown-divider mb-0">
                                     </li>
                                     <li class="px-3 text-center text-muted" id="noNotifications">
                                         <small>Không có thông báo nào</small>
                                     </li>
                                     <div id="notificationList"></div>
                                     <li>
-                                        <hr class="dropdown-divider">
+                                        <hr class="dropdown-divider mt-0">
                                     </li>
                                     <li class="text-center">
                                         <a class="dropdown-item small" href="#" id="markAllRead">Đánh dấu tất cả đã

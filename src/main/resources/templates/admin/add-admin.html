@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/base::layout(~{::section})}">>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<section>
+    <style>
+        .password-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .show-button {
+            position: absolute;
+            right: 10px;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+    </style>
+    <div class="row">
+        <div class="card mb-0 col-xxl-4 offset-xxl-4 col-md-6 offset-md-3 col-sm-8 offset-sm-2">
+            <div class="card-body p-4">
+                <div class="text-center">
+                    <a class="p-0 modak-regular" href="/"
+                       style="height: 45px; font-size: 30px; color: rgb(20, 119, 209)" th:text="${webInfo.name}"></a>
+                </div>
+
+                <div class="text-center">
+                    <h4>Thêm admin</h4>
+                    <th:block th:if="${session.succMsg}">
+                        <p class="text-success fw-bold">[[${session.succMsg}]]</p>
+                        <th:block th:text="${@commonServiceImpl.removeSessionMessage()}"></th:block>
+                    </th:block>
+
+                    <th:block th:if="${session.errorMsg}">
+                        <p class="text-danger fw-bold">[[${session.errorMsg}]]</p>
+                        <th:block th:text="${@commonServiceImpl.removeSessionMessage()}"></th:block>
+                    </th:block>
+                </div>
+
+                <form action="/admin/save-admin" method="post">
+                    <div class="mb-3">
+                        <label class="form-label" for="fullName">Họ và tên</label>
+                        <input class="form-control" name="fullName" type="text" id="fullName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="phoneNumber">Số điện thoại</label>
+                        <input class="form-control" name="phoneNumber" type="text" id="phoneNumber" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="email">Email</label>
+                        <input class="form-control" name="email" type="email" id="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="password">Mật khẩu</label>
+                        <div class="password-container">
+                            <input class="form-control" name="password" type="password" id="password"
+                                   oninput="validatePassword(this.value)" required>
+                            <button type="button" id="show-button" class="show-button">
+                                <i class="ti ti-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <ul>
+                            <li id="minLength">
+                                <i class="fas fa-times text-danger"></i> Tối thiểu 8 kí tự
+                            </li>
+                            <li id="uppercase">
+                                <i class="fas fa-times text-danger"></i> Có ít nhất 1 kí tự viết hoa
+                            </li>
+                            <li id="lowercase">
+                                <i class="fas fa-times text-danger"></i> Có ít nhất 1 kí tự viết thường
+                            </li>
+                            <li id="symbol">
+                                <i class="fas fa-times text-danger"></i>Có ít nhất 1 kí tự đặt biệt (@$!%*?&)
+                            </li>
+                        </ul>
+                    </div>
+                    <span id="errorMessage" class="font-weight-bold text-danger"></span>
+                    <div class="mb-4">
+                        <label class="form-label" for="confirmpassword">Xác nhận mật khẩu</label>
+                        <div class="password-container">
+                            <input class="form-control" name="cpassword" type="password" id="confirmpassword"
+                                   required>
+                            <button type="button" id="show-button-1" class="show-button">
+                                <i class="ti ti-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-2 pe-0">
+                            <a onclick="history.back()" class="btn btn-success w-100"><i class="ti ti-logout-2"></i></a>
+                        </div>
+                        <div class="col-10">
+                            <button type="submit" id="submit-button" class="btn bg-primary text-white form-control">
+                                Đăng ký
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Function to toggle password visibility
+        document.getElementById('show-button').addEventListener('click',
+            function () {
+                const passwordInput = document.getElementById('password');
+                const icon = this.querySelector('i');
+
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.remove('ti-eye');
+                    icon.classList.add('ti-eye-off');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.remove('ti-eye-off');
+                    icon.classList.add('ti-eye');
+                }
+            });
+
+        document.getElementById('show-button-1').addEventListener('click',
+            function () {
+                const passwordInput = document.getElementById('confirmpassword');
+                const icon = this.querySelector('i');
+
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.classList.remove('ti-eye');
+                    icon.classList.add('ti-eye-off');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.classList.remove('ti-eye-off');
+                    icon.classList.add('ti-eye');
+                }
+            });
+
+        function validatePassword(password) {
+            const strongPasswordRegex =
+                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>\-_])[A-Za-z\d!@#$%^&*(),.?":{}|<>\-_]{8,}$/;
+            const errorMessage = document.getElementById('errorMessage');
+
+            // Check each condition and update the corresponding label
+            document.getElementById('minLength').innerHTML =
+                password.length >= 8 ?
+                    '<i class="fas fa-check text-success"></i> Tối thiểu 8 kí tự' :
+                    '<i class="fas fa-times text-danger"></i> Tối thiểu 8 kí tự';
+            document.getElementById('uppercase').innerHTML =
+                /[A-Z]/.test(password) ?
+                    '<i class="fas fa-check text-success"></i> Có ít nhất 1 kí tự viết hoa' :
+                    '<i class="fas fa-times text-danger"></i> Có ít nhất 1 kí tự viết hoa';
+            document.getElementById('lowercase').innerHTML =
+                /[a-z]/.test(password) ?
+                    '<i class="fas fa-check text-success"></i> Có ít nhất 1 kí tự viết thường' :
+                    '<i class="fas fa-times text-danger"></i> Có ít nhất 1 kí tự viết thường';
+            document.getElementById('symbol').innerHTML =
+                /[!@#$%^&*(),.?":{}|<>\-_]/.test(password) ?
+                    '<i class="fas fa-check text-success"></i> Có ít nhất 1 kí tự đặt biệt (@$!%*?&)' :
+                    '<i class="fas fa-times text-danger"></i> Có ít nhất 1 kí tự đặt biệt (@$!%*?&)';
+
+            // Check overall validity and update the error message
+            if (strongPasswordRegex.test(password)) {
+                errorMessage.textContent = 'Mật khẩu mạnh';
+                errorMessage.classList.remove('text-danger');
+                errorMessage.classList.add('text-success');
+                return true;
+            } else {
+                errorMessage.textContent = 'Mật khẩu yếu';
+                errorMessage.classList.remove('text-success');
+                errorMessage.classList.add('text-danger');
+                return false;
+            }
+        }
+
+        document.getElementById('submit-button').addEventListener('click', function (event) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmpassword').value;
+
+            if (!validatePassword(password)) {
+                event.preventDefault(); // Prevent form submission if password is weak
+                alert('Mật khẩu của bạn không đủ mạnh. Vui lòng kiểm tra lại các yêu cầu.');
+            }
+
+            if (password !== confirmPassword && validatePassword(password)) {
+                event.preventDefault(); // Prevent form submission if passwords don't match
+                alert('Mật khẩu và mật khẩu xác nhận không khớp. Vui lòng kiểm tra lại.');
+            }
+
+        });
+    </script>
+</section>
+</body>
+</html>

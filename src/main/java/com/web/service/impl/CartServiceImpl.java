@@ -12,6 +12,7 @@ import com.web.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.smartcardio.Card;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -131,5 +132,21 @@ public class CartServiceImpl implements CartService {
         return cartItems.stream()
                 .mapToDouble(item -> item.getPrice() * item.getQuantity())
                 .sum();
+    }
+
+    @Override
+    public void clearCart(Long userId) {
+        cartRepository.deleteAllByUserId(userId);
+    }
+
+    @Override
+    public Cart getCartByUserAndProduct(Long userId, Long productId) {
+        return cartRepository.findByUserIdAndProductId(userId, productId)
+                .orElse(null);
+    }
+
+    @Override
+    public void addToCart(Cart cart) {
+        cartRepository.save(cart);
     }
 }

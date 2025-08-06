@@ -28,7 +28,7 @@ public class NotificationServiceImpl implements NotificationService {
             notification.setUser(recipient);
             notification.setType(type);
             notification.setContent(message);
-            notification.setProductId(product.getId());
+            notification.setContentId(String.valueOf(product.getId()));
             notification.setSenderId(sender.getUserId());
             notification.setSenderName(sender.getFullName());
             notification.setSenderAvatar(sender.getProfileImage());
@@ -64,5 +64,10 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public void markAsRead(String notificationKey) {
         notificationRepository.updateIsReadByNotificationKey(notificationKey);
+    }
+
+    @Override
+    public void save(Notification notification) {
+        notificationRepository.save(notification);
     }
 }

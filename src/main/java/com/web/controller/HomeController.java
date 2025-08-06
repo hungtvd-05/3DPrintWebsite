@@ -1,5 +1,6 @@
 package com.web.controller;
 
+import com.web.config.WebInfoConfig;
 import com.web.model.*;
 import com.web.service.*;
 import com.web.util.CommonUtil;
@@ -52,6 +53,9 @@ public class HomeController {
     @Autowired
     private CartService cartService;
 
+    @Autowired
+    private WebInfoConfig webInfoConfig;
+
     @ModelAttribute
     public void getUserDetails(Principal p, Model m) {
 
@@ -61,8 +65,7 @@ public class HomeController {
             m.addAttribute("countCart", cartService.countCartByUserId(user.getUserId()));
             m.addAttribute("user", user);
         }
-        WebInfo webInfo = webInfoService.getWebInfo();
-        m.addAttribute("webInfo", (webInfo != null) ? webInfo : new WebInfo());
+        m.addAttribute("webInfo", webInfoConfig.getWebInfo());
         m.addAttribute("policiesInfo", blogService.getALlPoliciesIsEnabled().stream().limit(3));
 //        m.addAttribute("supportUrls", supportUrlService.getSupportUrl());
     }
@@ -119,13 +122,9 @@ public class HomeController {
 
             String url = CommonUtil.generateUrl(request) + "/confirm-email?token=" + confirmToken;
 
-            Boolean sendMail = commonUtil.sendConfirmEmail(url, addUser.getEmail());
+            commonUtil.sendConfirmEmail(url, addUser.getEmail());
 
-            if (sendMail) {
-                session.setAttribute("succMsg", "Đã gửi xác nhận tài khoản qua mail của bạn!");
-            } else {
-                session.setAttribute("errorMsg", "Lỗi!");
-            }
+            session.setAttribute("succMsg", "Đã gửi xác nhận tài khoản qua mail của bạn!");
 
         } else {
             session.setAttribute("errorMsg", "Lỗi!");
@@ -166,13 +165,9 @@ public class HomeController {
 
             String url = CommonUtil.generateUrl(request) + "/reset-password?token=" + resetToken;
 
-            Boolean sendMail = commonUtil.sendMail(url, email);
+            commonUtil.sendMail(url, email);
 
-            if (sendMail) {
-                session.setAttribute("succMsg", "Đã gửi xác nhận thay đổi mật khẩu qua mail của bạn!");
-            } else {
-                session.setAttribute("errorMsg", "Lỗi!");
-            }
+            session.setAttribute("succMsg", "Đã gửi xác nhận thay đổi mật khẩu qua mail của bạn!");
         }
 
         return "redirect:/forgot-password";

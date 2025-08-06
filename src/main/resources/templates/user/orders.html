@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{base::layout(~{::section})}">>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<section>
+    <style>
+        .order-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .order-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+        }
+
+        .order-header {
+            /*background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);*/
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid black;
+        }
+
+        .order-id {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .order-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            /*background: rgba(255, 255, 255, 0.2);*/
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .order-body {
+            padding: 20px;
+        }
+
+        .order-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .items-count {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .order-total {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #28a745;
+        }
+
+        .order-date {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .order-items-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .item-preview {
+            background: #e9ecef;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            color: #495057;
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .btn-outline-primary {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            border-radius: 6px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 16px;
+            border: 2px dashed #dee2e6;
+            margin: 40px auto;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 20px;
+        }
+
+        .empty-title {
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+
+        .empty-subtitle {
+            color: #adb5bd;
+            font-size: 0.9rem;
+        }
+
+        .alert {
+            border-radius: 8px;
+            border: none;
+            font-size: 0.9rem;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+        }
+
+        .alert .fas {
+            font-size: 1rem;
+        }
+
+        .btn-close {
+            font-size: 0.8rem;
+        }
+
+        /* Animation cho button loading */
+        .fa-spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Style cho button disabled */
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
+
+    <div class="container-xl">
+        <div class="d-flex justify-content-between align-items-center my-4">
+            <h4 class="mb-0">Đơn hàng của tôi</h4>
+            <span class="badge bg-light text-dark" th:text="'Tổng: ' + ${orders.size()} + ' đơn hàng'"></span>
+        </div>
+
+        <!-- Empty State -->
+        <div th:if="${orders.isEmpty()}" class="empty-state">
+            <div class="empty-icon">📦</div>
+            <h5 class="empty-title">Chưa có đơn hàng nào</h5>
+            <p class="empty-subtitle">Hãy khám phá sản phẩm và tạo đơn hàng đầu tiên của bạn!</p>
+            <a href="/" class="btn btn-primary mt-3">Mua sắm ngay</a>
+        </div>
+
+        <!-- Orders List -->
+        <div th:unless="${orders.isEmpty()}">
+            <div th:each="order : ${orders}" class="order-card">
+                <!-- Order Header -->
+                <div class="order-header">
+                    <h6 class="order-id">Đơn hàng #[[${order.orderId}]]</h6>
+                    <span class="order-status"  th:style="'background:' + ${order.status == 'Đã hủy!' ? '#dc3545':'rgb(20, 119, 209)'}" th:text="${order.status}"></span>
+                </div>
+
+                <!--                 Order Body -->
+                <div class="order-body">
+                    <!-- Order Date -->
+                    <div class="order-date" th:if="${order.createdAt}">
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        Đặt hàng: [[${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}]]
+                    </div>
+
+                    <!-- Order Summary -->
+                    <div class="order-summary">
+                        <div>
+                            <span class="items-count">
+                                [[${order.orderItems.size()}]] sản phẩm
+                            </span>
+                        </div>
+                        <div class="order-total" th:if="${order.totalAmount}">
+                            [[${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')}]] VND
+                        </div>
+                    </div>
+
+                    <!-- Items Preview (first 3 items) -->
+                    <div class="order-items-preview">
+                        <div th:each="item, itemStat : ${order.orderItems}"
+                             th:if="${itemStat.index < 3}"
+                             class="item-preview">
+                            [[${item.product.name}]] x[[${item.quantity}]]
+                        </div>
+                        <div th:if="${order.orderItems.size() > 3}" class="item-preview">
+                            +[[${order.orderItems.size() - 3}]] sản phẩm khác
+                        </div>
+                    </div>
+
+                    <!-- Order Actions -->
+                    <div class="order-actions">
+                        <a th:href="@{'/user/order-details:' + ${order.orderId}}"
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-eye me-1"></i>
+                            Xem chi tiết
+                        </a>
+                        <button th:if="${order.status == 'Đơn hàng đang được xử lí!' || order.status == 'Đã xác nhận đơn hàng!'}"
+                                class="btn btn-outline-danger btn-sm"
+                                th:data-order-id="${order.orderId}"
+                                onclick="confirmCancelOrder(this.getAttribute('data-order-id'))">
+                            <i class="fas fa-times"></i>
+                            Hủy đơn hàng
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function confirmCancelOrder(orderId) {
+            if (confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?')) {
+                cancelOrder(orderId);
+            }
+        }
+
+        function cancelOrder(orderId) {
+            const formData = new FormData();
+            formData.append('orderId', orderId);
+
+            // Tìm button để disable trong khi xử lý
+            const cancelButton = document.querySelector(`button[data-order-id="${orderId}"]`);
+            const originalText = cancelButton.innerHTML;
+
+            // Disable button và hiển thị loading
+            cancelButton.disabled = true;
+            cancelButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang hủy...';
+
+            fetch('/user/cancel-order', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Ẩn nút hủy đơn
+                        cancelButton.style.display = 'none';
+
+                        // Cập nhật trạng thái đơn hàng
+                        const orderCard = cancelButton.closest('.order-card');
+                        const statusElement = orderCard.querySelector('.order-status');
+                        statusElement.textContent = 'Đã hủy';
+                        statusElement.style.background = '#dc3545';
+                        statusElement.style.color = 'white';
+
+                        // Hiển thị thông báo thành công
+                        showNotification('success', 'Hủy đơn hàng thành công!', orderCard);
+
+                    } else {
+                        // Khôi phục button nếu lỗi
+                        cancelButton.disabled = false;
+                        cancelButton.innerHTML = originalText;
+
+                        // Hiển thị thông báo lỗi
+                        showNotification('error', 'Lỗi: ' + data.message, cancelButton.closest('.order-card'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+
+                    // Khôi phục button nếu lỗi
+                    cancelButton.disabled = false;
+                    cancelButton.innerHTML = originalText;
+
+                    // Hiển thị thông báo lỗi
+                    showNotification('error', 'Có lỗi xảy ra khi hủy đơn hàng!', cancelButton.closest('.order-card'));
+                });
+        }
+
+        function showNotification(type, message, targetElement) {
+            // Tạo thông báo
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show mt-3`;
+            notification.style.marginBottom = '0';
+
+            notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+            // Thêm thông báo vào order-body
+            const orderBody = targetElement.querySelector('.order-body');
+            orderBody.appendChild(notification);
+
+            // Tự động ẩn thông báo sau 5 giây
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+    </script>
+</section>
+</body>
+</html>

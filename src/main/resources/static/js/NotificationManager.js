@@ -14,8 +14,7 @@ class NotificationManager {
             duplicatesFiltered: 0,
             errorsOccurred: 0
         };
-        this.notificationKeys = new Set();
-        // Map để theo dõi notification theo key
+
         this.notificationsByKey = new Map();
 
         this.initializeElements();
@@ -147,6 +146,15 @@ class NotificationManager {
                 console.log(`Subscribed to /topic/product/${this.currentProductId}`);
             }
 
+            const userRole = document.querySelector('[data-user-role]')?.getAttribute('data-user-role');
+            if (userRole === 'ROLE_ADMIN') {
+                this.stompClient.subscribe('/topic/admin/notifications', (message) => {
+                    const notification = JSON.parse(message.body);
+                    this.handleNotification(notification, true);
+                });
+                console.log('Subscribed to /topic/admin/notifications (Admin only)');
+            }
+
             this.stompClient.subscribe('/topic/notifications', (message) => {
                 const notification = JSON.parse(message.body);
                 this.handleNotification(notification, true);
@@ -171,6 +179,26 @@ class NotificationManager {
         }
     }
 
+    bindOrderEvents(orderId) {
+        const selectElement = document.querySelector(`select[data-order-id="${orderId}"]`);
+        const buttonElement = document.querySelector(`button[data-order-id="${orderId}"]`);
+
+        if (selectElement && buttonElement) {
+            // Remove existing listeners to prevent duplicates
+            selectElement.removeEventListener('change', this.handleSelectChange);
+
+            // Add new listener
+            selectElement.addEventListener('change', () => {
+                buttonElement.style.background = 'linear-gradient(135deg, #ffc107 0%, #ff8c00 100%)';
+                buttonElement.innerHTML = '<i class="fas fa-save me-1"></i>Lưu thay đổi';
+            });
+
+            console.log(`Events bound for order: ${orderId}`);
+        } else {
+            console.warn(`Could not find elements for order: ${orderId}`);
+        }
+    }
+
     handleNotification(notification, addNotification = false) {
         try {
             console.log('Handling notification:', notification);
@@ -191,12 +219,53 @@ class NotificationManager {
                     title: this.getNotificationTitle(notification),
                     message: this.getNotificationMessage(notification),
                     avatar: notification.user?.profileImage || 'default.png',
-                    productId: notification.productId,
+                    contentId: notification.contentId,
                     timestamp: new Date(),
                     read: false,
                     notificationKey: notificationKey,
                     serverId: notification.id
                 };
+
+                if (newNotification.type === 'new_order') {
+                    const urlPath = window.location.pathname + window.location.search;
+                    const isOrdersPage = urlPath.includes(`/admin/orders`);
+                    if (isOrdersPage) {
+                        const ordersList = document.querySelector('.order-list');
+                        if (ordersList) {
+                            fetch(`/admin/order/${newNotification.contentId}`, {
+                                method: 'GET',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            }).then(response => {
+                                if (!response.ok) {
+                                    throw new Error(`HTTP error! status: ${response.status}`);
+                                }
+                                return response.json();
+                            }).then(data => {
+                                if (data.success && data.order) {
+                                    const orderHTML = this.createOrderHTML(data.order);
+                                    ordersList.insertAdjacentHTML('afterbegin', orderHTML);
+
+                                    // **QUAN TRỌNG: Bind events cho order mới**
+                                    this.bindOrderEvents(data.order.orderId);
+
+                                    // Highlight new order
+                                    const newOrderCard = ordersList.firstElementChild;
+                                    if (newOrderCard) {
+                                        this.highlightNewElement(newOrderCard);
+                                    }
+                                }
+                            })
+                        }
+
+                        // const commentHTML = this.createCommentHTML(notification);
+                        // commentsList.insertAdjacentHTML('afterbegin', commentHTML);
+                        // this.highlightNewElement(commentsList.firstElementChild);
+
+                    }
+                }
 
                 this.addOrUpdateNotification(newNotification);
             }
@@ -206,6 +275,108 @@ class NotificationManager {
             this.handleError(error, 'handleNotification');
         }
     }
+
+    getStatusClassFromStatus(status) {
+        if (status.includes('Đơn hàng đang được xử lí!')) return 'bg-warning text-dark';
+        if (status.includes('Đã xác nhận đơn hàng!')) return 'bg-info text-white';
+        if (status.includes('Đơn hàng đã đóng gói!')) return 'bg-primary text-white';
+        if (status.includes('Đã giao cho bên vận chuyển!')) return 'bg-primary text-white';
+        if (status.includes('Đã vận chuyển thành công!')) return 'bg-success text-white';
+        if (status.includes('Đã hủy!')) return 'bg-danger text-white';
+        return 'bg-warning text-dark';
+    }
+
+    formatOrderDate(dateString) {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('vi-VN') + ' ' + date.toLocaleTimeString('vi-VN');
+    }
+
+    // formatPrice(price) {
+    //     if (!price) return '0';
+    //     return new Intl.NumberFormat('vi-VN').format(price);
+    // }
+
+    createItemsPreview(orderItems) {
+        if (!orderItems || orderItems.length === 0) {
+            return '<span class="item-preview">Không có sản phẩm</span>';
+        }
+
+        return orderItems.slice(0, 3).map(item =>
+            `<span class="item-preview">${item.productName} x${item.quantity}</span>`
+        ).join('');
+    }
+
+    createOrderHTML(order) {
+        const statusClass = this.getStatusClassFromStatus(order.status);
+
+        return `
+        <div class="order-card" style="animation: slideInDown 0.5s ease-out;">
+            <!-- Order Header -->
+            <div class="order-header">
+                <h6 class="order-id">Đơn hàng #${order.orderId}</h6>
+                <span class="order-status ${statusClass}"
+                      data-order-id="${order.orderId}">${order.status}</span>
+            </div>
+
+            <!-- Order Body -->
+            <div class="order-body">
+                <!-- Order Info -->
+                <div class="order-date">
+                    <i class="ti ti-user me-1"></i>
+                    Người nhận: ${order.receiverName || 'N/A'}
+                </div>
+                <div class="order-date">
+                    <i class="ti ti-phone me-1"></i>
+                    Số điện thoại: ${order.phoneNumber || 'N/A'}
+                </div>
+                <div class="order-date">
+                    <i class="ti ti-map-pins me-1"></i>
+                    Địa chỉ: ${order.detailAddress || 'N/A'}
+                </div>
+                <div class="order-date">
+                    <i class="ti ti-calendar me-1"></i>
+                    Ngày đặt: ${this.formatOrderDate(order.createdAt)}
+                </div>
+
+                <!-- Order Summary -->
+                <div class="order-summary">
+                    <div>
+                        <span class="items-count">${order.orderItems?.length || 0} sản phẩm</span>
+                    </div>
+                    <div class="order-total">${this.formatPrice(order.totalAmount)} VND</div>
+                </div>
+
+                <!-- Items Preview -->
+                <div class="order-items-preview">
+                    ${this.createItemsPreview(order.orderItems)}
+                </div>
+
+                <!-- Order Actions -->
+                <div class="order-actions">
+                    <div class="status-container">
+                        <select class="order-status-select" data-order-id="${order.orderId}">
+                            <option value="1" ${order.status.includes('Đơn hàng đang được xử lí!') ? 'selected' : ''}>Đơn hàng đang được xử lí!</option>
+                            <option value="2" ${order.status.includes('Đã xác nhận đơn hàng!') ? 'selected' : ''}>Đã xác nhận đơn hàng!</option>
+                            <option value="3" ${order.status.includes('Đơn hàng đã đóng gói!') ? 'selected' : ''}>Đơn hàng đã đóng gói!</option>
+                            <option value="4" ${order.status.includes('Đã giao cho bên vận chuyển!') ? 'selected' : ''}>Đã giao cho bên vận chuyển!</option>
+                            <option value="5" ${order.status.includes('Đã vận chuyển thành công!') ? 'selected' : ''}>Đã vận chuyển thành công!</option>
+                            <option value="6" ${order.status.includes('Đã hủy!') ? 'selected' : ''}>Đã hủy!</option>
+                        </select>
+                        <button type="button" class="update-btn" data-order-id="${order.orderId}" 
+                                onclick="confirmStatusOrder(this.getAttribute('data-order-id'))">
+                            <i class="fas fa-save me-1"></i>Cập nhật
+                        </button>
+                    </div>
+                    <a href="/admin/order-details:${order.orderId}" class="btn btn-outline-primary">
+                        <i class="fas fa-eye me-1"></i>Chi tiết
+                    </a>
+                </div>
+            </div>
+        </div>
+    `;
+    }
+
 
     createNotificationKey(notification) {
         if (notification.notificationKey) {
@@ -217,7 +388,7 @@ class NotificationManager {
         }
 
         const userId = notification.user?.userId || 'unknown';
-        const productId = notification.productId || 'unknown';
+        const productId = notification.contentId || 'unknown';
         const type = notification.type || 'unknown';
         const content = (notification.content || '').substring(0, 50);
 
@@ -277,27 +448,7 @@ class NotificationManager {
         try {
             console.log('Handling comment notification:', notification);
 
-            const shouldAddToNotificationList = !(notification.user && notification.user.userId === this.userId);
-
-            if (shouldAddToNotificationList) {
-                const newNotification = {
-                    id: notification.id || Date.now(),
-                    type: notification.type,
-                    title: this.getNotificationTitle(notification),
-                    message: this.getNotificationMessage(notification),
-                    avatar: notification.user?.profileImage || 'default.png',
-                    productId: notification.productId,
-                    timestamp: new Date(),
-                    read: false,
-                    notificationKey: notification.notificationKey || this.createNotificationKey(notification),
-                    serverId: notification.id
-                };
-
-                this.addOrUpdateNotification(newNotification);
-                this.showToastNotification(notification);
-            }
-
-            const isOnCommentPage = this.isOnCommentPage(notification.productId);
+            const isOnCommentPage = this.isOnCommentPage(notification.contentId);
             if (isOnCommentPage) {
                 this.addCommentToList(notification);
             }
@@ -324,7 +475,6 @@ class NotificationManager {
 
         if (!repliesContainer) {
             this.createEmptyRepliesContainer(notification.parentCommentId);
-            repliesContainer = document.getElementById(`replies-container-${notification.parentCommentId}`);
             repliesDiv = document.getElementById(`replies-${notification.parentCommentId}`);
         } else {
             this.showRepliesContainer(repliesContainer, notification.parentCommentId);
@@ -384,37 +534,6 @@ class NotificationManager {
         const commentHTML = this.createCommentHTML(notification);
         commentsList.insertAdjacentHTML('afterbegin', commentHTML);
         this.highlightNewElement(commentsList.firstElementChild);
-    }
-
-    createRepliesContainer(notification) {
-        const parentComment = document.querySelector(`[data-comment-id="${notification.parentCommentId}"]`)?.closest('.comment-item');
-
-        if (parentComment) {
-            const repliesHTML = `
-                <div class="replies-container ms-4 mt-2" id="replies-container-${notification.parentCommentId}" style="display: block;">
-                    <div class="replies" id="replies-${notification.parentCommentId}">
-                        ${this.createReplyHTML(notification)}
-                    </div>
-                    <div class="mt-2">
-                        <div class="reply-container">
-                            <input type="text" class="comment-input reply-input"
-                                   id="reply-input-bottom-${notification.parentCommentId}"
-                                   placeholder="Viết phản hồi...">
-                            <button class="send-button reply-send-button"
-                                    id="reply-send-bottom-${notification.parentCommentId}"
-                                    data-comment-id="${notification.parentCommentId}"
-                                    disabled>
-                                <i class="ti ti-send"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            const commentContent = parentComment.querySelector('.comment-content');
-            commentContent.insertAdjacentHTML('beforeend', repliesHTML);
-            this.createToggleButton(parentComment, notification.parentCommentId);
-        }
     }
 
     showRepliesContainer(repliesContainer, parentCommentId) {
@@ -563,20 +682,26 @@ class NotificationManager {
     getNotificationMessage(notification) {
         const messages = {
             'new_comment': `${notification.user?.fullName || 'Người dùng'} đã bình luận về sản phẩm
-            <br>"${this.truncateText(notification.content, 50)}"
-            <br>Product ID: ${notification.productId || 'Không xác định'}`,
+        <br>"${this.truncateText(notification.content, 50)}"
+        <br>Product ID: ${notification.contentId || 'Không xác định'}`,
             'new_reply': `${notification.user?.fullName || 'Người dùng'} đã trả lời bình luận của bạn
-            <br>"${this.truncateText(notification.content, 50)}"
-            <br>Product ID: ${notification.productId || 'Không xác định'}`,
-            'new_order': `Đơn hàng mới từ ${notification.user?.fullName || 'Người dùng'}`,
-            'order_status': 'Trạng thái đơn hàng đã được cập nhật',
-            'new_product_approval': `${notification.user?.fullName || 'Người dùng'} cần xác nhận sản phẩm mới
-            <br>"${this.truncateText(notification.content, 50)}"
-            <br>Product ID: ${notification.productId || 'Không xác định'}`,
-            'product_approved': `${notification.content}`,
-            'product_rejected': `${notification.content}`
+        <br>"${this.truncateText(notification.content, 50)}"`,
+            // THÊM XỬ LÝ CHO NEW_ORDER
+            'new_order': `${notification.user?.fullName || 'Khách hàng'} đã đặt đơn hàng mới
+        <br>
+        ${notification.content}`,
+
+            'order_status': `Đơn hàng #${notification.orderId || 'N/A'} đã được cập nhật`,
+            'new_product_approval': `Sản phẩm "${notification.productName || 'N/A'}" cần được xác nhận`,
+            'product_approved': `Sản phẩm "${notification.productName || 'N/A'}" đã được phê duyệt`,
+            'product_rejected': `Sản phẩm "${notification.productName || 'N/A'}" bị từ chối`
         };
-        return messages[notification.type] || notification.message || 'Bạn có thông báo mới';
+        return messages[notification.type] || notification.content || 'Thông báo mới';
+    }
+
+// Thêm method format price nếu chưa có
+    formatPrice(price) {
+        return new Intl.NumberFormat('vi-VN').format(price).replace(/\./g, ',');
     }
 
     truncateText(text, maxLength = 50) {
@@ -685,14 +810,16 @@ class NotificationManager {
             const notification = this.notifications[index];
             this.markAsRead(index, notificationKey);
 
-            if (notification.productId) {
+            if (notification.contentId) {
 
                 if (notification.type === 'new_comment' || notification.type === 'new_reply') {
-                    window.location.href = `/product:${notification.productId}/comments`;
+                    window.location.href = `/product:${notification.contentId}/comments`;
                 } else if (notification.type === 'new_product_approval') {
-                    window.location.href = `/admin/product-of-user/product:${notification.productId}`;
+                    window.location.href = `/admin/product-of-user/product:${notification.contentId}`;
                 } else if (notification.type === 'product_approved' || notification.type === 'product_rejected') {
-                    window.location.href = `/user/edit-product:${notification.productId}`;
+                    window.location.href = `/user/edit-product:${notification.contentId}`;
+                } else if (notification.type === 'new_order') {
+                    window.location.href = `/admin/order-details:${notification.contentId}`;
                 }
 
             }
@@ -825,7 +952,7 @@ class NotificationManager {
                 this.notifications = data.notifications.map(n => ({
                     type: n.type,
                     message: this.getNotificationMessage(n),
-                    productId: n.productId,
+                    contentId: n.contentId,
                     timestamp: new Date(n.createdAt),
                     avatar: n.senderAvatar || 'default.png',
                     title: this.getNotificationTitle(n),

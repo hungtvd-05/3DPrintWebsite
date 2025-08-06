@@ -1,13 +1,16 @@
 package com.web.controller;
 
+import com.web.config.WebInfoConfig;
 import com.web.model.*;
 import com.web.service.*;
 import com.web.util.CommonUtil;
+import com.web.util.OrderStatus;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -22,6 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,8 +41,8 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private WebInfoService webInfoService;
+//    @Autowired
+//    private WebInfoService webInfoService;
 
     @Autowired
     private ProductService productService;
@@ -55,6 +59,21 @@ public class UserController {
     @Autowired
     private AddressService addressService;
 
+    @Autowired
+    private OrderService orderService;
+
+    @Autowired
+    private CommonUtil commonUtil;
+
+    @Autowired
+    private WebInfoConfig webInfoConfig;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
+    @Autowired
+    private NotificationService notificationService;
+
     @ModelAttribute
     public void getUserDetails(Principal p, Model m) {
 
@@ -64,8 +83,7 @@ public class UserController {
             m.addAttribute("countCart", cartService.countCartByUserId(user.getUserId()));
             m.addAttribute("user", user);
         }
-        WebInfo webInfo = webInfoService.getWebInfo();
-        m.addAttribute("webInfo", (webInfo != null) ? webInfo : new WebInfo());
+        m.addAttribute("webInfo", webInfoConfig.getWebInfo());
         m.addAttribute("policiesInfo", blogService.getALlPoliciesIsEnabled().stream().limit(3));
 //        m.addAttribute("supportUrls", supportUrlService.getSupportUrl());
     }
@@ -338,17 +356,17 @@ public class UserController {
 
     @PostMapping("/update-quantity")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> updateQuantity(@RequestBody UpdateQuantityRequest request) {
+    public ResponseEntity<Map<String, Object>> updateQuantity(@RequestParam Long cartId, @RequestParam Integer quantity) {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            boolean success = cartService.updateQuantity(request.getCartId(), request.getQuantity());
+            boolean success = cartService.updateQuantity(cartId, quantity);
 
             if (success) {
                 response.put("success", true);
                 response.put("message", "Quantity updated successfully");
-                response.put("cartId", request.getCartId());
-                response.put("newQuantity", request.getQuantity());
+                response.put("cartId", cartId);
+                response.put("newQuantity", quantity);
             } else {
                 response.put("success", false);
                 response.put("message", "Cart item not found");
@@ -364,11 +382,11 @@ public class UserController {
     }
 
     @PostMapping("/delete-cart-item")
-    public ResponseEntity<Map<String, Object>> deleteCartItem(@RequestBody DeleteCartRequest request) {
+    public ResponseEntity<Map<String, Object>> deleteCartItem(@RequestParam Long cartId) {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            boolean success = cartService.deleteCartItem(request.getCartId());
+            boolean success = cartService.deleteCartItem(cartId);
 
             if (success) {
                 response.put("success", true);
@@ -413,11 +431,11 @@ public class UserController {
     }
 
     @PostMapping("/update-default-address")
-    public ResponseEntity<Map<String, Object>> updateDefaultAddress(@RequestBody UpdateDefaultAddressRequest request) {
+    public ResponseEntity<Map<String, Object>> updateDefaultAddress(@RequestParam Long addressId) {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            boolean success = addressService.updateDefaultAddress(request.getAddressId());
+            boolean success = addressService.updateDefaultAddress(addressId);
 
             if (success) {
                 response.put("success", true);
@@ -489,13 +507,332 @@ public class UserController {
         return "user/checkout";
     }
 
-    @GetMapping("/order-product")
-    public String orderProduct(Model m, Principal p) {
+    @PostMapping("/order-product")
+    public String orderProduct(@RequestParam Long addressId,
+                               @RequestParam(value = "note", defaultValue = "") String note,
+                               Principal p,
+                               HttpSession session) {
+
+        try {
+            UserAccount user = userService.getUserAccountByEmail(p.getName());
+
+            System.out.println("User: " + user);
+            System.out.println("Address ID: " + addressId);
+            System.out.println("Note: " + note);
+
+            if (ObjectUtils.isEmpty(user)) {
+                session.setAttribute("errorMsg", "Bạn chưa đăng nhập!");
+                return "redirect:/user/checkout";
+            }
+
+            Address address = addressService.findById(addressId);
+            if (ObjectUtils.isEmpty(address) || !address.getUserId().equals(user.getUserId())) {
+                session.setAttribute("errorMsg", "Địa chỉ không hợp lệ!");
+                return "redirect:/user/checkout";
+            }
+
+            List<CartItemDTO> cartItems = cartService.getCartWithProducts(user.getUserId());
+            if (cartItems.isEmpty()) {
+                session.setAttribute("errorMsg", "Giỏ hàng trống!");
+                return "redirect:/user/cart";
+            }
+
+            Double totalPrice = cartService.calculateTotalPrice(cartItems);
+
+            Order order = new Order();
+            order.setUserId(user.getUserId());
+            order.setTotalAmount(totalPrice);
+            order.setStatus(OrderStatus.fromId(1).getName());
+            order.setPaymentMethod("COD");
+            order.setDetailAddress(address.getDetailAddress() + ", " + address.getWardFullName());
+            order.setReceiverName(address.getFullName());
+            order.setPhoneNumber(address.getPhone());
+            order.setNote(note);
+            order.onCreate();
+
+            Order savedOrder = orderService.createOrderFromCart(order, cartItems);
+
+            if (!ObjectUtils.isEmpty(savedOrder)) {
+                session.setAttribute("succMsg", "Đặt hàng thành công! Mã đơn hàng: " + savedOrder.getOrderId());
+                cartService.clearCart(user.getUserId());
+
+                try {
+                    String orderDetails = buildOrderDetailsString(savedOrder, cartItems);
+                    commonUtil.sendOrderConfirmationEmailAsync(
+                            user.getEmail(),
+                            user.getFullName(),
+                            orderDetails
+                    );
+                    WebInfo webInfo = webInfoConfig.getWebInfo(); // Hoặc lấy từ config
+                    if (webInfo != null && !webInfo.getEmail().isEmpty()) {
+                        commonUtil.sendNewOrderNotificationToAdmin(
+                                webInfo.getEmail(),
+                                user.getFullName(),
+                                user.getEmail(),
+                                savedOrder.getOrderId(),
+                                savedOrder.getTotalAmount(),
+                                orderDetails
+                        );
+                    }
+
+                    sendNewOrderNotificationToAdmin(savedOrder, user);
+
+                    System.out.println("Email gửi thành công đến: " + user.getEmail());
+                } catch (Exception emailException) {
+                    System.err.println("Lỗi gửi email: " + emailException.getMessage());
+                }
+
+                session.setAttribute("succMsg", "Đặt hàng thành công! Mã đơn hàng: " + savedOrder.getOrderId());
+                return "redirect:/user/orders";
+            } else {
+                session.setAttribute("errorMsg", "Không thể đặt hàng. Vui lòng thử lại sau.");
+                return "redirect:/user/checkout";
+            }
+
+        } catch (Exception e) {
+            return "redirect:/user/checkout";
+        }
+    }
+
+    private void sendNewOrderNotificationToAdmin(Order order, UserAccount customer) {
+        try {
+            // Tạo notification object
+            Map<String, Object> notification = new HashMap<>();
+            notification.put("id", System.currentTimeMillis());
+            notification.put("type", "new_order");
+            notification.put("contentId", order.getOrderId());
+            notification.put("totalAmount", order.getTotalAmount());
+            notification.put("createdAt", order.getCreatedAt());
+
+            // Thông tin khách hàng
+            Map<String, Object> customerInfo = new HashMap<>();
+            customerInfo.put("userId", customer.getUserId());
+            customerInfo.put("fullName", customer.getFullName());
+            customerInfo.put("email", customer.getEmail());
+            customerInfo.put("profileImage", customer.getProfileImage());
+            notification.put("user", customerInfo);
+
+            // Tạo content message
+            String content = String.format("Đơn hàng mới #%s từ %s - Tổng tiền: %s VNĐ",
+                    order.getOrderId(),
+                    customer.getFullName(),
+                    CommonUtil.formatPrice(order.getTotalAmount()));
+            notification.put("content", content);
+
+            // Tạo notification key để tránh duplicate
+            String notificationKey = String.format("new_order_%s_%d",
+                    order.getOrderId(),
+                    System.currentTimeMillis());
+            notification.put("notificationKey", notificationKey);
+
+            List<UserAccount> admins = webInfoConfig.getAdminAccounts();
+
+            for (UserAccount admin : admins) {
+                Notification dbNotification = new Notification();
+                dbNotification.setUser(admin);
+                dbNotification.setType("new_order");
+                dbNotification.setContent(content);
+                dbNotification.setContentId(order.getOrderId());
+                dbNotification.setSenderId(customer.getUserId());
+                dbNotification.setSenderName(customer.getFullName());
+                dbNotification.setSenderAvatar(customer.getProfileImage());
+                dbNotification.setNotificationKey(notificationKey + "_" + admin.getUserId());
+                dbNotification.setIsRead(false);
+                dbNotification.setCreatedAt(LocalDateTime.now());
+
+                notificationService.save(dbNotification);
+            }
+
+            // Gửi đến admin qua WebSocket
+            messagingTemplate.convertAndSend("/topic/admin/notifications", notification);
+
+            System.out.println("Đã gửi notification đơn hàng mới đến admin: " + order.getOrderId());
+
+        } catch (Exception e) {
+            System.err.println("Lỗi gửi notification đến admin: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private String buildOrderDetailsString(Order order, List<CartItemDTO> cartItems) {
+        StringBuilder details = new StringBuilder();
+        details.append("<h3>Mã đơn hàng: ").append(order.getOrderId()).append("</h3>");
+        details.append("<p><strong>Người nhận:</strong> ").append(order.getReceiverName()).append("</p>");
+        details.append("<p><strong>Điện thoại:</strong> ").append(order.getPhoneNumber()).append("</p>");
+        details.append("<p><strong>Địa chỉ:</strong> ").append(order.getDetailAddress()).append("</p>");
+        details.append("<h4>Chi tiết sản phẩm:</h4>");
+        details.append("<table border='1' style='border-collapse: collapse; width: 100%;'>");
+        details.append("<tr><th>Sản phẩm</th><th>Số lượng</th><th>Giá</th><th>Thành tiền</th></tr>");
+
+        for (CartItemDTO item : cartItems) {
+            double itemTotal = item.getPrice() * item.getQuantity();
+            details.append("<tr>")
+                    .append("<td>").append(item.getProductName()).append("</td>")
+                    .append("<td>").append(item.getQuantity()).append("</td>")
+                    .append("<td>").append(CommonUtil.formatPrice(item.getPrice())).append(" VNĐ</td>")
+                    .append("<td>").append(CommonUtil.formatPrice(itemTotal)).append(" VNĐ</td>")
+                    .append("</tr>");
+        }
+
+        details.append("</table>");
+        details.append("<h4><strong>Tổng tiền: ").append(CommonUtil.formatPrice(order.getTotalAmount())).append(" VNĐ</strong></h4>");
+
+        return details.toString();
+    }
+
+    @GetMapping("/orders")
+    public String viewOrders(Model m, Principal p) {
+
         UserAccount user = userService.getUserAccountByEmail(p.getName());
 
+        m.addAttribute("orders", orderService.getOrdersByUserId(user.getUserId()));
+
+        return "user/orders";
+    }
+
+    @GetMapping("/order-details:{orderId}")
+    public String viewOrderDetails(@PathVariable String orderId, Model m, Principal p) {
+        UserAccount user = userService.getUserAccountByEmail(p.getName());
+        Order order = orderService.getOrderByOrderIdAndUserId(orderId, user.getUserId());
+        if (ObjectUtils.isEmpty(order)) {
+            m.addAttribute("msg", "Không tìm thấy đơn hàng");
+            return "message";
+        }
+        m.addAttribute("order", order);
+        return "user/order_details";
+    }
+
+    @PostMapping("/cancel-order")
+    public ResponseEntity<Map<String, Object>> cancelOrder(@RequestParam String orderId, Principal p) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            UserAccount user = userService.getUserAccountByEmail(p.getName());
+            Order order = orderService.getOrderByOrderIdAndUserId(orderId, user.getUserId());
+
+            if (ObjectUtils.isEmpty(order)) {
+                response.put("success", false);
+                response.put("message", "Không tìm thấy đơn hàng");
+                return ResponseEntity.ok(response);
+            }
+
+            // Kiểm tra xem đơn hàng có thể hủy không
+            if (!canCancelOrder(order.getStatus())) {
+                response.put("success", false);
+                response.put("message", "Đơn hàng không thể hủy ở trạng thái hiện tại");
+                return ResponseEntity.ok(response);
+            }
+
+            // Cập nhật trạng thái đơn hàng
+            order.setStatus(OrderStatus.CANCEL.getName());
+            order.setUpdatedAt(LocalDateTime.now());
+
+            Order updatedOrder = orderService.updateOrder(order);
+
+            if (!ObjectUtils.isEmpty(updatedOrder)) {
+                response.put("success", true);
+                response.put("message", "Hủy đơn hàng thành công");
+
+                try {
+                    commonUtil.sendOrderCancellationEmailAsync(
+                            user.getEmail(),
+                            user.getFullName(),
+                            order.getOrderId()
+                    );
+
+                    WebInfo webInfo = webInfoConfig.getWebInfo();
+                    if (webInfo != null && !webInfo.getEmail().isEmpty()) {
+                        commonUtil.sendOrderCancellationNotificationToAdmin(
+                                webInfo.getEmail(),
+                                user.getFullName(),
+                                user.getEmail(),
+                                order.getOrderId(),
+                                order.getTotalAmount(),
+                                "Khách hàng hủy đơn"
+                        );
+                    }
+                } catch (Exception emailException) {
+                    System.err.println("Lỗi gửi email hủy đơn: " + emailException.getMessage());
+                }
+            } else {
+                response.put("success", false);
+                response.put("message", "Không thể hủy đơn hàng");
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Có lỗi xảy ra: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PostMapping("/reorder")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> reorderItems(@RequestParam String orderId, Principal p) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            UserAccount user = userService.getUserAccountByEmail(p.getName());
+            Order order = orderService.getOrderByOrderIdAndUserId(orderId, user.getUserId());
+
+            if (ObjectUtils.isEmpty(order)) {
+                response.put("success", false);
+                response.put("message", "Không tìm thấy đơn hàng");
+                return ResponseEntity.ok(response);
+            }
+
+            int addedItems = 0;
+            int skippedItems = 0;
+
+            // Thêm từng sản phẩm vào giỏ hàng
+            for (OrderItem item : order.getOrderItems()) {
+                Product product = item.getProduct();
+
+                // Kiểm tra sản phẩm còn tồn tại và còn hàng
+                if (!ObjectUtils.isEmpty(product) && product.getIsAcceptAdmin() && product.getConfirmed() == 1 && product.getStatus()) {
+                    Cart existingCart = cartService.getCartByUserAndProduct(user.getUserId(), product.getId());
+
+                    if (!ObjectUtils.isEmpty(existingCart)) {
+                        cartService.updateQuantity(existingCart.getId(), existingCart.getQuantity());
+                    } else {
+                        // Thêm mới vào giỏ hàng
+                        Cart newCart = new Cart();
+                        newCart.setUserId(user.getUserId());
+                        newCart.setProductId(product.getId());
+                        newCart.setQuantity(item.getQuantity());
+                        newCart.setUpdatedAt(LocalDateTime.now());
+                        cartService.addToCart(newCart);
+                    }
+                    addedItems++;
+                } else {
+                    skippedItems++;
+                }
+            }
+
+            if (addedItems > 0) {
+                response.put("success", true);
+                response.put("message", String.format("Đã thêm %d sản phẩm vào giỏ hàng", addedItems));
+                if (skippedItems > 0) {
+                    response.put("message", response.get("message") + String.format(" (%d sản phẩm không khả dụng)", skippedItems));
+                }
+            } else {
+                response.put("success", false);
+                response.put("message", "Không có sản phẩm nào có thể thêm vào giỏ hàng");
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Có lỗi xảy ra: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
 
 
-
-        return "user/order_product";
+    private boolean canCancelOrder(String status) {
+        return OrderStatus.IN_PROGRESS.getName().equals(status) || OrderStatus.ORDER_RECEIVED.getName().equals(status);
     }
 }

@@ -31,49 +31,75 @@
 
     <div class="container-xl">
         <h4 class="text-center my-3">Thanh toán</h4>
+        <th:block th:if="${session.succMsg}">
+            <p class="text-success fw-bold">[[${session.succMsg}]]</p>
+            <th:block th:text="${@commonServiceImpl.removeSessionMessage()}"></th:block>
+        </th:block>
 
-        <div class="con">
-            <div class="address-item" th:if="${address != null}">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6>[[${address.fullName}]] - <small class="text-muted" th:text="${address.phone}"></small></h6>
-                        <h6 class="mb-1" th:text="${address.detailAddress}"></h6>
-                        <small class="text-muted" th:text="${address.wardFullName}"></small>
-                        <span th:if="${address.isDefault}" class="badge bg-primary ms-2">Mặc định</span>
+        <th:block th:if="${session.errorMsg}">
+            <p class="text-danger fw-bold">[[${session.errorMsg}]]</p>
+            <th:block th:text="${@commonServiceImpl.removeSessionMessage()}"></th:block>
+        </th:block>
+        <form action="/user/order-product" method="post">
+            <div class="con">
+                <div class="address-item" th:if="${address != null}">
+                    <input type="hidden" th:value="${address.id}" id="addressId" name="addressId">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6>[[${address.fullName}]] - <small class="text-muted" th:text="${address.phone}"></small></h6>
+                            <h6 class="mb-1" th:text="${address.detailAddress}"></h6>
+                            <small class="text-muted" th:text="${address.wardFullName}"></small>
+                            <span th:if="${address.isDefault}" class="badge bg-primary ms-2">Mặc định</span>
+                        </div>
+                        <div class="btn-group">
+                            <a href="/user/addresses" class="btn btn-outline-primary btn-sm edit-address-btn"
+                               title="Chỉnh sửa địa chỉ">
+                                <i class="ti ti-edit"></i> Chọn địa chỉ
+                            </a>
+                        </div>
                     </div>
-                    <div class="btn-group">
-                        <a href="/user/addresses" class="btn btn-outline-primary btn-sm edit-address-btn"
-                                th:data-address-id="${address.id}"
-                                title="Chỉnh sửa địa chỉ">
-                            <i class="ti ti-edit"></i> Chọn địa chỉ
-                        </a>
+                </div>
+                <div class="address-item" th:if="${address == null}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="m-0">Chưa có địa chỉ giao hàng</h6>
+                        </div>
+                        <div class="btn-group">
+                            <a href="/user/addresses" class="btn btn-outline-primary btn-sm edit-address-btn"
+                               title="Chỉnh sửa địa chỉ">
+                                <i class="ti ti-edit"></i> Chọn địa chỉ
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="text-dark" th:each="cart : ${cartItems}">
-            <a th:href="'/product:' + ${cart.getProductId()}"><h6 class="product-name"
-                                                                  th:text="${cart.getProductName()}"></h6></a>
-            <div class="text-end">
-                <h5 class="">
-                    <span th:text="${#numbers.formatDecimal(cart.price, 0, 'COMMA', 0, 'POINT')}">0</span>
-                    VNĐ x <span th:text="${cart.getQuantity()}"></span>
-                </h5>
+            <div class="text-dark" th:each="cart : ${cartItems}">
+                <a th:href="'/product:' + ${cart.getProductId()}"><h6 class="product-name"
+                                                                      th:text="${cart.getProductName()}"></h6></a>
+                <div class="text-end">
+                    <h5 class="">
+                        <span th:text="${#numbers.formatDecimal(cart.price, 0, 'COMMA', 0, 'POINT')}">0</span>
+                        VNĐ x <span th:text="${cart.getQuantity()}"></span>
+                    </h5>
+                </div>
+                <hr>
             </div>
-            <hr>
-        </div>
-        <div class="d-flex justify-content-between mb-3">
             <div>
-                <h5>Tổng: <span th:text="${#numbers.formatDecimal(totalPrice, 0, 'COMMA', 0, 'POINT')}">0</span>
-                    VNĐ
-                </h5>
-                <small>Hình thức thanh toán: COD</small>
+                <input type="text" placeholder="Lời nhắn..." class="form-control mb-3" name="note">
             </div>
-            <div class="d-flex">
-                <a href="/user/order-product" class="btn btn-primary my-auto" th:if="${!cartItems.isEmpty()}">Đặt in</a>
+            <div class="d-flex justify-content-between mb-3">
+                <div>
+                    <h5>Tổng: <span th:text="${#numbers.formatDecimal(totalPrice, 0, 'COMMA', 0, 'POINT')}">0</span>
+                        VNĐ
+                    </h5>
+                    <small>Hình thức thanh toán: COD</small>
+                </div>
+                <div class="d-flex">
+                    <button type="submit" class="btn btn-primary my-auto" th:if="${!cartItems.isEmpty() && address != null}">Đặt in</button>
+                </div>
             </div>
-        </div>
+        </form>
     </div>
 
 

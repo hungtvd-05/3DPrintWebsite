@@ -22,7 +22,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Query("UPDATE Notification n SET n.isRead = true WHERE n.user = :user")
     void markAllAsReadByUser(@Param("user") UserAccount user);
 
-    Notification findByUser_UserIdAndTypeAndSenderIdAndProductId(Long userUserId, String type, Long senderId, Long productId);
+//    Notification findByUser_UserIdAndTypeAndSenderIdAndProductId(Long userUserId, String type, Long senderId, Long productId);
 
     Notification findByNotificationKey(String notificationKey);
 

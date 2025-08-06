@@ -1,8 +1,13 @@
 package com.web.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.web.config.WebInfoConfig;
 import com.web.model.*;
 import com.web.service.*;
+import com.web.util.CommonUtil;
+import com.web.util.OrderStatus;
+import jakarta.mail.MessagingException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -29,6 +34,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/admin")
@@ -59,6 +65,12 @@ public class AdminController {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private WebInfoConfig webInfoConfig;
+
+    @Autowired
+    private OrderService orderService;
+
     @ModelAttribute
     public void getUserDetails(Principal p, Model m) {
 
@@ -68,14 +80,13 @@ public class AdminController {
             m.addAttribute("user", user);
             m.addAttribute("countCart", 0);
         }
-        WebInfo webInfo = webInfoService.getWebInfo();
-        m.addAttribute("webInfo", (webInfo != null) ? webInfo : new WebInfo());
+        m.addAttribute("webInfo", webInfoConfig.getWebInfo());
 //        m.addAttribute("supportUrls", supportUrlService.getSupportUrl());
     }
 
     @GetMapping("")
     public String index() {
-        return "admin/index";
+        return "redirect:/admin/products";
     }
 
     @GetMapping("/settings")
@@ -87,6 +98,7 @@ public class AdminController {
     public String updateWebComponents(@ModelAttribute WebInfo webInfo, @RequestParam(value = "img", required = false) MultipartFile img, HttpSession session) throws IOException {
 
         if (!ObjectUtils.isEmpty(webInfoService.updateWebInfo(webInfo, img))) {
+            webInfoConfig.refreshWebInfo();
             session.setAttribute("succMsg", "Đã cập nhật thông tin website của bạn!");
         } else {
             session.setAttribute("errorMsg", "Lỗi cập nhật!");
@@ -876,6 +888,270 @@ public class AdminController {
         return "redirect:/admin/products";
     }
 
+    @GetMapping("/orders")
+    public String loadAllOrders(Model m,
+                                @RequestParam(name = "page", defaultValue = "1") Integer pageNumber,
+                                @RequestParam(value = "search", defaultValue = "") String search,
+                                @RequestParam(name = "pageSize", defaultValue = "20") Integer pageSize) {
+
+        Page<Order> page = orderService.getAllOrdersPage(pageNumber - 1, pageSize, search);
+
+        m.addAttribute("keywords", orderService.getAllKeywords());
+        m.addAttribute("orders", page.getContent());
+        m.addAttribute("search", search);
+        m.addAttribute("pageSize", pageSize);
+        m.addAttribute("totalElements", page.getTotalElements());
+        m.addAttribute("totalPages", page.getTotalPages());
+        m.addAttribute("page", page.getNumber());
+        m.addAttribute("isFirst", page.isFirst());
+        m.addAttribute("isLast", page.isLast());
+
+        return "admin/orders";
+    }
+
+    @PostMapping("/update-order-status")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateOrderStatus(@RequestParam String orderId,
+                                                                 @RequestParam Integer status,
+                                                                 Principal principal) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Lấy thông tin admin hiện tại
+            UserAccount admin = userService.getUserAccountByEmail(principal.getName());
+            if (admin == null) {
+                response.put("success", false);
+                response.put("message", "Không tìm thấy thông tin admin!");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+
+            // Tìm đơn hàng
+            Order order = orderService.getOrderByOrderId(orderId);
+            if (order == null) {
+                response.put("success", false);
+                response.put("message", "Không tìm thấy đơn hàng!");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            // Lưu trạng thái cũ để log
+            String oldStatus = order.getStatus();
+
+            // Cập nhật trạng thái đơn hàng
+            String newStatus = OrderStatus.fromId(status).getName();
+            order.setStatus(newStatus);
+            order.setUpdatedAt(LocalDateTime.now());
+
+            // Lưu vào database
+            Order updatedOrder = orderService.updateOrder(order);
+
+            if (updatedOrder != null) {
+
+                response.put("success", true);
+                response.put("message", "Cập nhật trạng thái đơn hàng thành công!");
+                response.put("newStatus", newStatus);
+                response.put("orderId", orderId);
+
+                return ResponseEntity.ok(response);
+
+            } else {
+                response.put("success", false);
+                response.put("message", "Lỗi khi cập nhật đơn hàng!");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error updating order status: " + e.getMessage());
+            e.printStackTrace();
+
+            response.put("success", false);
+            response.put("message", "Lỗi hệ thống: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @GetMapping("/order/{orderId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getOrderById(@PathVariable String orderId) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            Order order = orderService.getOrderByOrderId(orderId);
+
+            if (order != null) {
+                response.put("success", true);
+                response.put("order", new OrderDTO(order));
+            } else {
+                response.put("success", false);
+                response.put("message", "Không tìm thấy đơn hàng");
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Lỗi khi tải đơn hàng: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    @GetMapping("/order-details:{orderId:[0-9a-zA-Z-]+}")
+    public String viewOrderDetails(@PathVariable("orderId") String orderId, Model m) {
+        Order order = orderService.getOrderByOrderId(orderId);
+        if (ObjectUtils.isEmpty(order)) {
+            return "redirect:/admin/orders";
+        }
+        m.addAttribute("order", order);
+        return "admin/order-details";
+    }
+
+    @GetMapping("/users")
+    public String loadAllUsers(Model m,
+                               @RequestParam(name = "page", defaultValue = "1") Integer pageNumber,
+                               @RequestParam(value = "search", defaultValue = "") String search,
+                               @RequestParam(name = "pageSize", defaultValue = "20") Integer pageSize) {
+
+        Page<UserAccount> page = userService.getAllUsersPage(pageNumber - 1, pageSize, search);
+        m.addAttribute("keywords", userService.searchAllUsers());
+        m.addAttribute("users", page.getContent());
+        m.addAttribute("search", search);
+        m.addAttribute("pageSize", pageSize);
+        m.addAttribute("totalElements", page.getTotalElements());
+        m.addAttribute("totalPages", page.getTotalPages());
+        m.addAttribute("page", page.getNumber());
+        m.addAttribute("isFirst", page.isFirst());
+        m.addAttribute("isLast", page.isLast());
+
+        return "admin/users";
+    }
+
+    @PostMapping("/updateSts")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateUserStatus(@RequestParam Long userId,
+                                                                 @RequestParam Boolean status) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            UserAccount user = userService.getUserAccountById(userId);
+            user.setIsEnable(status);
+
+            UserAccount updatedUser = userService.updateUserAccount(user);
+
+            if (updatedUser != null) {
+                response.put("success", true);
+                response.put("message", "Cập nhật thành công!");
+                response.put("statusName", updatedUser.getIsEnable() ? "Confirm" : "No");
+                return ResponseEntity.ok(response);
+
+            } else {
+                response.put("success", false);
+                response.put("message", "Lỗi khi cập nhật đơn hàng!");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error updating order status: " + e.getMessage());
+            e.printStackTrace();
+
+            response.put("success", false);
+            response.put("message", "Lỗi hệ thống: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @GetMapping("/admin")
+    public String adminDashboard(Model m, Principal p, @RequestParam(value = "search", defaultValue = "") String search) {
+        UserAccount currentUser = userService.getUserAccountByEmail(p.getName());
+
+        List<UserAccount> allAdmins = search.isEmpty() ? userService.getAllAdminAccount() : userService.searchAllAdminAccount(search);
+
+        m.addAttribute("adminList", allAdmins.stream()
+                .filter(admin -> !admin.getUserId().equals(currentUser.getUserId()))
+                .collect(Collectors.toList()));
+
+        m.addAttribute("search", search);
+        m.addAttribute("keywords", userService.searchAllAdmin(currentUser));
+        return "admin/admin";
+    }
+
+    @GetMapping("/add-admin")
+    public String addAdmin(Model m) {
+        return "admin/add-admin";
+    }
+
+    @PostMapping("/save-admin")
+    public String saveUser(@RequestParam("fullName") String fullName,
+                           @RequestParam("phoneNumber") String phoneNumber,
+                           @RequestParam("email") String email,
+                           @RequestParam("password") String password,
+                           HttpServletRequest request,
+                           HttpSession session) {
+
+        if (userService.existsEmail(email)) {
+            session.setAttribute("errorMsg", "Email này đã tồn tại!");
+            return "redirect:/admin/add-admin";
+        }
+
+        User user = new User();
+        user.setEmail(email);
+        user.setPassword(password);
+
+        UserAccount userAccount = new UserAccount();
+        userAccount.setFullName(fullName);
+        userAccount.setPhoneNumber(phoneNumber);
+        userAccount.setEmail(email);
+
+        if (!ObjectUtils.isEmpty(userService.addAdmin(user, userAccount))) {
+            session.setAttribute("succMsg", "Đã thêm quản trị viên thành công!");
+        } else {
+            session.setAttribute("errorMsg", "Chưa thể thêm quản trị viên!");
+        }
+
+        return "redirect:/admin/admin";
+    }
+
+    @PostMapping("/delete-admin")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> deleteAdmin(@RequestParam Long userId, Principal principal) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            UserAccount currentUser = userService.getUserAccountByEmail(principal.getName());
+            if (currentUser == null || currentUser.getUserId().equals(userId)) {
+                response.put("success", false);
+                response.put("message", "Bạn không thể xóa chính mình!");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            User adminToDelete = userService.getUserById(userId);
+
+            if (adminToDelete == null) {
+                response.put("success", false);
+                response.put("message", "Không tìm thấy quản trị viên này!");
+                return ResponseEntity.badRequest().body(response);
+            } else if (adminToDelete.getUserAccount().getRole().equals("ROLE_USER")) {
+                response.put("success", false);
+                response.put("message", "Không thể xóa người dùng, chỉ có thể xóa quản trị viên!");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            boolean isDeleted = userService.deleteAdmin(adminToDelete);
+            if (isDeleted) {
+                response.put("success", true);
+                response.put("message", "Đã xóa quản trị viên thành công!");
+            } else {
+                response.put("success", false);
+                response.put("message", "Lỗi khi xóa quản trị viên!");
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Lỗi hệ thống: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+
+    }
 }
 
 

@@ -24,7 +24,7 @@ public class Notification {
     private String content; // Nội dung thông báo
 
     @Column(name = "product_id")
-    private Long productId;
+    private String contentId;
 
     @Column(name = "sender_id")
     private Long senderId; // Người gửi thông báo

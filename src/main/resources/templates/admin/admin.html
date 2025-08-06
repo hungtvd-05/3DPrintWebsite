@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{admin/base::layout(~{::section})}">>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+</head>
+<body>
+<section>
+    <!--    <link rel="stylesheet" th:href="@{/css/table.css}">-->
+
+    <style>
+        .tag-input-wrapper {
+            position: relative;
+        }
+
+        .suggestion-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .suggestion-item {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .suggestion-item:hover {
+            background-color: #f8f9fa;
+        }
+    </style>
+
+    <div class="container-xl">
+        <h4 class="text-center">Users</h4>
+        <hr>
+        <th:block th:if="${session.succMsg}">
+            <p class="text-success fw-bold text-center">[[${session.succMsg}]]</p>
+            <th:block th:text="${@commonServiceImpl.removeSessionMessage()}"></th:block>
+        </th:block>
+
+        <th:block th:if="${session.errorMsg}">
+            <p class="text-danger fw-bold text-center">[[${session.errorMsg}]]</p>
+            <th:block th:text="${@commonServiceImpl.removeSessionMessage()}"></th:block>
+        </th:block>
+
+        <div class="row mb-3">
+            <div class="col-md-10 col-sm-9 col-7">
+                <div class="tag-input-wrapper">
+                    <input type="text"
+                           class="form-control"
+                           id="input-sugg"
+                           placeholder="Tìm kiếm sản phẩm..."
+                           autocomplete="off"
+                           th:value="${search}"/>
+                    <div class="suggestion-list" style="display: none;">
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2 col-sm-3 col-5">
+                <a class="btn btn-primary float-right w-100" href="/admin/add-admin">Thêm admin</a>
+            </div>
+        </div>
+        <th:block th:if="${search == true && adminList.size() == 0}">
+            <p class="fs-4 text-center">Không có người dùng nào phù hợp yêu cầu tìm kiếm!</p>
+        </th:block>
+        <th:block th:if="${search == false && adminList.size() == 0}">
+            <p class="fs-4 text-center">Không có tài khoản nào!</p>
+        </th:block>
+        <th:block th:if="${adminList.size() > 0}">
+            <table class="table table-bordered mb-4">
+                <thead>
+                <tr>
+                    <th scope="col">Tên</th>
+                    <th scope="col" class="text-end">Trạng thái</th>
+                </tr>
+                </thead>
+                <tbody class="danhsach">
+                <tr th:each="u,c:${adminList}">
+                    <td data-label="Tên">
+                        [[${u.getFullName()}]]
+                        <br>
+                        [[${u.getEmail()}]]
+                        <br>
+                        [[${u.getPhoneNumber()}]]
+                    </td>
+                    <td data-label="Trạng thái" class="text-end">
+                        <span class="status" th:userId="${u.userId}" th:text="${u.isEnable ? 'Confirm' : 'No'}"></span>
+                        <a href="javascript:void(0)"
+                           class="btn btn-primary btn-sm update-status-btn"
+                           th:data-id="${u.userId}"
+                           data-status="true"
+                           data-role="ROLE_USER">
+                            Confirm
+                        </a>
+                        <a href="javascript:void(0)"
+                           class="btn btn-danger btn-sm update-status-btn"
+                           th:data-id="${u.userId}"
+                           data-status="false"
+                           data-role="ROLE_USER">
+                            No
+                        </a>
+                        <a href="javascript:void(0)"
+                           class="btn btn-outline-danger btn-sm delete-admin-btn"
+                           th:data-id="${u.userId}"
+                           th:data-name="${u.fullName}"
+                           th:data-email="${u.email}">
+                            <i class="fas fa-trash"></i> Xóa
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <script th:inline="javascript">
+                const input = document.getElementById('input-sugg');
+                const suggestionList = document.querySelector('.suggestion-list');
+                let availableKeywords = new Set();
+
+                // Lấy danh sách keywords từ Thymeleaf (là Set<String>)
+                const initialKeywords = [[${keywords}]];
+
+                // Thêm tất cả keywords vào Set để tìm kiếm
+                initialKeywords.forEach(keyword => {
+                    if (keyword && keyword.trim()) {
+                        availableKeywords.add(keyword.toLowerCase());
+                    }
+                });
+
+                // Xử lý input
+                input.addEventListener('input', function () {
+                    const value = this.value.trim().toLowerCase();
+                    updateSuggestions(value);
+                });
+
+                // Xử lý phím Enter và Escape
+                input.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSearchInput(this.value.trim());
+                    } else if (e.key === 'Escape') {
+                        hideSuggestions();
+                    }
+                });
+
+                // Ẩn gợi ý khi click ra ngoài
+                document.addEventListener('click', function (e) {
+                    if (!e.target.closest('.tag-input-wrapper')) {
+                        hideSuggestions();
+                    }
+                });
+
+                function updateSuggestions(value) {
+                    if (!value) {
+                        hideSuggestions();
+                        return;
+                    }
+
+                    const matches = [];
+                    availableKeywords.forEach(keyword => {
+                        if (keyword.includes(value)) {
+                            matches.push(keyword);
+                        }
+                    });
+
+                    if (matches.length > 0) {
+                        matches.sort((a, b) => {
+                            const aStartsWith = a.startsWith(value);
+                            const bStartsWith = b.startsWith(value);
+                            if (aStartsWith && !bStartsWith) return -1;
+                            if (!aStartsWith && bStartsWith) return 1;
+                            return a.length - b.length;
+                        });
+
+                        showSuggestions(matches.slice(0, 8), value);
+                    } else {
+                        hideSuggestions();
+                    }
+                }
+
+                function showSuggestions(matches, inputValue) {
+                    suggestionList.innerHTML = '';
+
+                    matches.forEach(keyword => {
+                        const div = document.createElement('div');
+                        div.className = 'suggestion-item';
+
+                        // Highlight text matching
+                        const matchIndex = keyword.toLowerCase().indexOf(inputValue.toLowerCase());
+                        const beforeMatch = keyword.slice(0, matchIndex);
+                        const match = keyword.slice(matchIndex, matchIndex + inputValue.length);
+                        const afterMatch = keyword.slice(matchIndex + inputValue.length);
+
+                        div.innerHTML = `${beforeMatch}<strong>${match}</strong>${afterMatch}`;
+
+                        div.addEventListener('click', () => {
+                            handleSearchInput(keyword);
+                            input.value = keyword;
+                            hideSuggestions();
+                        });
+
+                        suggestionList.appendChild(div);
+                    });
+
+                    suggestionList.style.display = 'block';
+                }
+
+                function hideSuggestions() {
+                    suggestionList.style.display = 'none';
+                }
+
+                function handleSearchInput(value) {
+                    if (!value) return;
+
+                    // Thực hiện tìm kiếm với keyword
+                    window.location.href = `/admin/admin?search=${encodeURIComponent(value)}`;
+                }
+            </script>
+
+            <script>
+                $(document).ready(function () {
+
+                    $('.update-status-btn').click(function () {
+                        var btn = $(this);
+                        var userId = btn.data('id');
+                        var status = btn.data('status');
+
+                        var statusSpan = $(`span.status[userId="${userId}"]`);
+
+                        const formData = new FormData();
+                        formData.append('userId', userId);
+                        formData.append('status', status);
+
+                        fetch('/admin/updateSts', {
+                            method: 'POST',
+                            body: formData,
+                            headers: {'X-Requested-With': 'XMLHttpRequest'}
+                        }).then(response => {
+                            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                            return response.json();
+                        }).then(data => {
+                            if (data.success && data.statusName) {
+                                statusSpan.fadeOut(200, function () {
+                                    $(this).text(data.statusName).fadeIn(200);
+                                });
+                            }
+                        })
+
+                    });
+                })
+            </script>
+            <script>
+                // Script xử lý xóa admin
+                $(document).ready(function () {
+                    $('.delete-admin-btn').click(function () {
+                        var btn = $(this);
+                        var userId = btn.data('id');
+                        var adminName = btn.data('name');
+                        var adminEmail = btn.data('email');
+
+                        // Xác nhận trước khi xóa
+                        if (confirm(`Bạn có chắc chắn muốn xóa quản trị viên "${adminName}" (${adminEmail})?\n\nHành động này không thể hoàn tác!`)) {
+
+                            // Disable button để tránh click nhiều lần
+                            btn.prop('disabled', true).text('Đang xóa...');
+
+                            const formData = new FormData();
+                            formData.append('userId', userId);
+
+                            fetch('/admin/delete-admin', {
+                                method: 'POST',
+                                body: formData,
+                                headers: {'X-Requested-With': 'XMLHttpRequest'}
+                            })
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error(`HTTP error! status: ${response.status}`);
+                                    }
+                                    return response.json();
+                                })
+                                .then(data => {
+                                    if (data.success) {
+                                        // Hiển thị thông báo thành công
+                                        alert(data.message || 'Xóa quản trị viên thành công!');
+
+                                        // Reload trang để cập nhật danh sách
+                                        window.location.reload();
+                                    } else {
+                                        // Hiển thị lỗi
+                                        alert(data.message || 'Có lỗi xảy ra khi xóa quản trị viên!');
+
+                                        // Enable lại button
+                                        btn.prop('disabled', false).html('<i class="fas fa-trash"></i> Xóa');
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    alert('Có lỗi xảy ra khi xóa quản trị viên!');
+
+                                    // Enable lại button
+                                    btn.prop('disabled', false).html('<i class="fas fa-trash"></i> Xóa');
+                                });
+                        }
+                    });
+                });
+            </script>
+        </th:block>
+    </div>
+</section>
+</body>
+</html>

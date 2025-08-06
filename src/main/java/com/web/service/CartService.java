@@ -1,8 +1,7 @@
 package com.web.service;
 
+import com.web.model.Cart;
 import com.web.model.CartItemDTO;
-import com.web.model.Product;
-import com.web.model.UserAccount;
 
 import java.util.List;
 
@@ -13,4 +12,7 @@ public interface CartService {
     Boolean updateQuantity(Long cartId, Integer newQuantity);
     Boolean deleteCartItem(Long cartId);
     Double calculateTotalPrice(List<CartItemDTO> cartItems);
+    void clearCart(Long userId);
+    Cart getCartByUserAndProduct(Long userId, Long productId);
+    void addToCart(Cart cart);
 }

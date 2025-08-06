@@ -118,6 +118,13 @@
                 <a class="btn btn-primary" th:if="${!cartItems.isEmpty()}" href="/user/checkout">Thanh toán</a>
             </div>
         </th:block>
+        <th:block th:if="${cartItems.isEmpty()}">
+            <div class="text-center my-5">
+                <h5>Giỏ hàng của bạn hiện đang trống.</h5>
+                <p>Hãy thêm sản phẩm vào giỏ hàng để bắt đầu mua sắm!</p>
+                <a class="btn btn-primary" href="/products">Tiếp tục mua sắm</a>
+            </div>
+        </th:block>
     </div>
 
     <script>
@@ -210,15 +217,12 @@
         });
 
         function updateCartQuantity(cartId, newQuantity) {
+            const formData = new FormData();
+            formData.append('cartId', cartId);
+            formData.append('quantity', newQuantity);
             fetch('/user/update-quantity', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    cartId: cartId,
-                    quantity: newQuantity
-                })
+                body: formData
             })
                 .then(response => response.json())
                 .then(data => {
@@ -258,21 +262,25 @@
         });
 
         function deleteCartItem(cartId) {
+            const formData = new FormData();
+            formData.append('cartId', cartId);
             fetch('/user/delete-cart-item', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    cartId: cartId
-                })
+                body: formData
             })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         // Remove item from DOM
-                        const cartElement = document.querySelector(`[data-id="${cartId}"]`).closest('div');
-                        cartElement.remove();
+                        const trashIcon = document.querySelector(`[data-id="${cartId}"].ti-trash-filled`);
+
+                        // Tìm container chứa toàn bộ thông tin sản phẩm
+                        let cartItemContainer = trashIcon.closest('.text-dark');
+
+                        // Xóa toàn bộ cart item bao gồm cả tên sản phẩm
+                        if (cartItemContainer) {
+                            cartItemContainer.remove();
+                        }
 
                         // Update cart count in header if exists
                         updateCartCount();

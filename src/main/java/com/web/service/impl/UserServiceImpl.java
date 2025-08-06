@@ -8,6 +8,9 @@ import com.web.repository.UserRepository;
 import com.web.service.UserService;
 import com.web.util.AppConstant;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,9 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -66,11 +69,6 @@ public class UserServiceImpl implements UserService {
         return false;
     }
 
-//    @Override
-//    public UserDTO getUserDTOByEmail(String email) {
-//        return userRepository.getUserDTOByEmail(email);
-//    }
-
     @Override
     public Boolean existsEmail(String email) {
         User user = userRepository.findByEmail(email);
@@ -103,13 +101,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional
-    public void updateConfirmEmailToken(String email, String confirmToken) {
-        User user = userRepository.findByEmailAndUserAccount_Confirmed(email, false);
-        if (!ObjectUtils.isEmpty(user)) {
-            user.setConfirmToken(confirmToken);
-            userRepository.save(user);
-        }
+    public User addAdmin(User user, UserAccount userAccount) {
+        userAccount.setProfileImage("default.png");
+        userAccount.setRole("ROLE_ADMIN");
+        userAccount.setIsEnable(true);
+        userAccount.setConfirmed(true);
+        UserAccount savedUserAccount = userAccountRepository.save(userAccount);
+
+        user.setUserId(savedUserAccount.getUserId());
+        user.setAccountNonLocked(true);
+        user.setFailedAttempt(0);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        return userRepository.save(user);
     }
 
     @Override
@@ -150,6 +154,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public User getUserById(Long id) {
+        return userRepository.findById(id).orElse(null);
+    }
+
+    @Override
     @Transactional
     public UserAccount updateUserAccount(UserAccount userAccount) {
         return userAccountRepository.save(userAccount);
@@ -176,6 +185,61 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserAccount getUserAccountByEmail(String email) {
         return userAccountRepository.findByEmail(email);
+    }
+
+    @Override
+    public List<UserAccount> getAllAdminAccount() {
+        return userAccountRepository.findAllByRole("ROLE_ADMIN");
+    }
+
+    @Override
+    public List<UserAccount> searchAllAdminAccount(String search) {
+        return userAccountRepository.searchAllAdminAccount(search);
+    }
+
+    @Override
+    public Page<UserAccount> getAllUsersPage(Integer pageNumber, Integer pageSize, String search) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        if (search != null && !search.isEmpty()) {
+            return userAccountRepository.searchUserAccount(pageable, search);
+        }
+        return userAccountRepository.findAllByRole("ROLE_USER", pageable);
+    }
+
+    @Override
+    public Set<String> searchAllUsers() {
+        List<UserAccount> userAccounts = userAccountRepository.findAllByRole("ROLE_USER");
+        return userAccounts.stream()
+                .filter(userAccount -> userAccount.getConfirmed() == true)
+                .flatMap(user -> Stream.of(
+                user.getEmail(),
+                user.getFullName(),
+                user.getPhoneNumber()
+        )).filter(keyword -> keyword != null && !keyword.trim().isEmpty())
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<String> searchAllAdmin(UserAccount currentAdmin) {
+        List<UserAccount> userAccounts = userAccountRepository.findAllByRole("ROLE_ADMIN");
+        return userAccounts.stream()
+                .filter(userAccount -> userAccount.getConfirmed() == true && !userAccount.getUserId().equals(currentAdmin.getUserId()))
+                .flatMap(user -> Stream.of(
+                        user.getEmail(),
+                        user.getFullName(),
+                        user.getPhoneNumber()
+                )).filter(keyword -> keyword != null && !keyword.trim().isEmpty())
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Boolean deleteAdmin(User admin) {
+        try {
+            userRepository.delete(admin);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
 }
