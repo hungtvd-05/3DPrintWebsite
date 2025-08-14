@@ -692,9 +692,9 @@ class NotificationManager {
         ${notification.content}`,
 
             'order_status': `Đơn hàng #${notification.orderId || 'N/A'} đã được cập nhật`,
-            'new_product_approval': `Sản phẩm "${notification.productName || 'N/A'}" cần được xác nhận`,
-            'product_approved': `Sản phẩm "${notification.productName || 'N/A'}" đã được phê duyệt`,
-            'product_rejected': `Sản phẩm "${notification.productName || 'N/A'}" bị từ chối`
+            'new_product_approval': `${notification.content || 'N/A'}`,
+            'product_approved': `${notification.content || 'N/A'}`,
+            'product_rejected': `${notification.content || 'N/A'}`
         };
         return messages[notification.type] || notification.content || 'Thông báo mới';
     }

@@ -54,6 +54,12 @@ public class Order {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(nullable = false)
+    private Boolean isCreated;
+
+    @Column(nullable = false)
+    private Boolean isPaid;
+
     // Relationships
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JoinColumn(name = "orderId", referencedColumnName = "orderId")

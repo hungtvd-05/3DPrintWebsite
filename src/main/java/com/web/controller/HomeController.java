@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,7 +20,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.Principal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Controller
@@ -55,6 +60,18 @@ public class HomeController {
 
     @Autowired
     private WebInfoConfig webInfoConfig;
+
+    @Autowired
+    private CheckOutService checkOutService;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
+    @Autowired
+    private OrderService orderService;
 
     @ModelAttribute
     public void getUserDetails(Principal p, Model m) {
@@ -436,6 +453,139 @@ public class HomeController {
         m.addAttribute("search", search);
         m.addAttribute("sorted", sorted);
         return "view_profile";
+    }
+
+    @GetMapping("/vnpay-payment")
+    public String InfoPaying(HttpServletRequest request, HttpSession session, Principal p) throws MessagingException, UnsupportedEncodingException {
+
+        UserAccount user = userService.getUserAccountByEmail(p.getName());
+
+        String orderInfo = request.getParameter("vnp_OrderInfo");
+        Order order = orderService.getOrderById(orderInfo);
+
+        int paymentStatus = checkOutService.orderReturn(request, order);
+
+        if (paymentStatus == 1) {
+            session.setAttribute("succMsg", "Đặt hàng thành công! Mã đơn hàng: " + request.getParameter("vnp_OrderInfo"));
+            cartService.clearCart(user.getUserId());
+
+            try {
+                String orderDetails = buildOrderDetailsString(order);
+                commonUtil.sendOrderConfirmationEmailAsync(
+                        user.getEmail(),
+                        user.getFullName(),
+                        orderDetails
+                );
+                WebInfo webInfo = webInfoConfig.getWebInfo(); // Hoặc lấy từ config
+                if (webInfo != null && !webInfo.getEmail().isEmpty()) {
+                    commonUtil.sendNewOrderNotificationToAdmin(
+                            webInfo.getEmail(),
+                            user.getFullName(),
+                            user.getEmail(),
+                            order.getOrderId(),
+                            order.getTotalAmount(),
+                            orderDetails
+                    );
+                }
+
+                sendNewOrderNotificationToAdmin(order, user);
+
+                System.out.println("Email gửi thành công đến: " + user.getEmail());
+            } catch (Exception emailException) {
+                System.err.println("Lỗi gửi email: " + emailException.getMessage());
+            }
+
+            return "redirect:/user/orders";
+        } else {
+            session.setAttribute("errorMsg", "Thanh toán thấy bại. Vui lòng thử lại sau.");
+            return "redirect:/user/checkout";
+        }
+    }
+
+    private String buildOrderDetailsString(Order order) {
+        StringBuilder details = new StringBuilder();
+        details.append("<h3>Mã đơn hàng: ").append(order.getOrderId()).append("</h3>");
+        details.append("<p><strong>Người nhận:</strong> ").append(order.getReceiverName()).append("</p>");
+        details.append("<p><strong>Điện thoại:</strong> ").append(order.getPhoneNumber()).append("</p>");
+        details.append("<p><strong>Địa chỉ:</strong> ").append(order.getDetailAddress()).append("</p>");
+        details.append("<h4>Chi tiết sản phẩm:</h4>");
+        details.append("<table border='1' style='border-collapse: collapse; width: 100%;'>");
+        details.append("<tr><th>Sản phẩm</th><th>Số lượng</th><th>Giá</th><th>Thành tiền</th></tr>");
+
+        for (OrderItem item : order.getOrderItems()) {
+            double itemTotal = item.getPrice() * item.getQuantity();
+            details.append("<tr>")
+                    .append("<td>").append(item.getProduct().getName()).append("</td>")
+                    .append("<td>").append(item.getQuantity()).append("</td>")
+                    .append("<td>").append(CommonUtil.formatPrice(item.getPrice())).append(" VNĐ</td>")
+                    .append("<td>").append(CommonUtil.formatPrice(itemTotal)).append(" VNĐ</td>")
+                    .append("</tr>");
+        }
+
+        details.append("</table>");
+        details.append("<h4><strong>Tổng tiền: ").append(CommonUtil.formatPrice(order.getTotalAmount())).append(" VNĐ</strong></h4>");
+
+        return details.toString();
+    }
+
+    private void sendNewOrderNotificationToAdmin(Order order, UserAccount customer) {
+        try {
+            // Tạo notification object
+            Map<String, Object> notification = new HashMap<>();
+            notification.put("id", System.currentTimeMillis());
+            notification.put("type", "new_order");
+            notification.put("contentId", order.getOrderId());
+            notification.put("totalAmount", order.getTotalAmount());
+            notification.put("createdAt", order.getCreatedAt());
+
+            // Thông tin khách hàng
+            Map<String, Object> customerInfo = new HashMap<>();
+            customerInfo.put("userId", customer.getUserId());
+            customerInfo.put("fullName", customer.getFullName());
+            customerInfo.put("email", customer.getEmail());
+            customerInfo.put("profileImage", customer.getProfileImage());
+            notification.put("user", customerInfo);
+
+            // Tạo content message
+            String content = String.format("Đơn hàng mới #%s từ %s - Tổng tiền: %s VNĐ",
+                    order.getOrderId(),
+                    customer.getFullName(),
+                    CommonUtil.formatPrice(order.getTotalAmount()));
+            notification.put("content", content);
+
+            // Tạo notification key để tránh duplicate
+            String notificationKey = String.format("new_order_%s_%d",
+                    order.getOrderId(),
+                    System.currentTimeMillis());
+            notification.put("notificationKey", notificationKey);
+
+            List<UserAccount> admins = webInfoConfig.getAdminAccounts();
+
+            for (UserAccount admin : admins) {
+                Notification dbNotification = new Notification();
+                dbNotification.setUser(admin);
+                dbNotification.setType("new_order");
+                dbNotification.setContent(content);
+                dbNotification.setContentId(order.getOrderId());
+                dbNotification.setSenderId(customer.getUserId());
+                dbNotification.setSenderName(customer.getFullName());
+                dbNotification.setSenderAvatar(customer.getProfileImage());
+                dbNotification.setNotificationKey(notificationKey + "_" + admin.getUserId());
+                dbNotification.setIsRead(false);
+                dbNotification.setCreatedAt(LocalDateTime.now());
+
+                notificationService.save(dbNotification);
+            }
+
+            // Gửi đến admin qua WebSocket
+            messagingTemplate.convertAndSend("/topic/admin/notifications", notification);
+
+            System.out.println("Đã gửi notification đơn hàng mới đến admin: " + order.getOrderId());
+
+        } catch (Exception e) {
+            System.err.println("Lỗi gửi notification đến admin: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
 }

@@ -15,4 +15,7 @@ public interface OrderService {
     Page<Order> getAllOrdersPage(Integer pageNumber, Integer pageSize, String search);
     Order getOrderByOrderId(String orderId);
     Set<String> getAllKeywords();
+    Order saveOrder(Order order);
+    Boolean deleteOrder(Order order);
+    Order getOrderById(String orderId);
 }

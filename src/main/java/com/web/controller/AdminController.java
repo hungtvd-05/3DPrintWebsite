@@ -941,6 +941,10 @@ public class AdminController {
             order.setStatus(newStatus);
             order.setUpdatedAt(LocalDateTime.now());
 
+            if (!status.equals(OrderStatus.CANCEL.getId())) {
+                order.setIsPaid(status.equals(OrderStatus.DELIVERED.getId()));
+            }
+
             // Lưu vào database
             Order updatedOrder = orderService.updateOrder(order);
 

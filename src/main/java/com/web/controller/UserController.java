@@ -5,6 +5,7 @@ import com.web.model.*;
 import com.web.service.*;
 import com.web.util.CommonUtil;
 import com.web.util.OrderStatus;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -73,6 +74,9 @@ public class UserController {
 
     @Autowired
     private NotificationService notificationService;
+
+    @Autowired
+    private CheckOutService checkOutService;
 
     @ModelAttribute
     public void getUserDetails(Principal p, Model m) {
@@ -510,7 +514,9 @@ public class UserController {
     @PostMapping("/order-product")
     public String orderProduct(@RequestParam Long addressId,
                                @RequestParam(value = "note", defaultValue = "") String note,
+                               @RequestParam(value = "paymentMethod", defaultValue = "COD") String paymentMethod,
                                Principal p,
+                               HttpServletRequest httpServletRequest,
                                HttpSession session) {
 
         try {
@@ -519,6 +525,7 @@ public class UserController {
             System.out.println("User: " + user);
             System.out.println("Address ID: " + addressId);
             System.out.println("Note: " + note);
+            System.out.println("Payment Method: " + paymentMethod);
 
             if (ObjectUtils.isEmpty(user)) {
                 session.setAttribute("errorMsg", "Bạn chưa đăng nhập!");
@@ -543,7 +550,7 @@ public class UserController {
             order.setUserId(user.getUserId());
             order.setTotalAmount(totalPrice);
             order.setStatus(OrderStatus.fromId(1).getName());
-            order.setPaymentMethod("COD");
+            order.setPaymentMethod(paymentMethod);
             order.setDetailAddress(address.getDetailAddress() + ", " + address.getWardFullName());
             order.setReceiverName(address.getFullName());
             order.setPhoneNumber(address.getPhone());
@@ -552,44 +559,53 @@ public class UserController {
 
             Order savedOrder = orderService.createOrderFromCart(order, cartItems);
 
-            if (!ObjectUtils.isEmpty(savedOrder)) {
-                session.setAttribute("succMsg", "Đặt hàng thành công! Mã đơn hàng: " + savedOrder.getOrderId());
-                cartService.clearCart(user.getUserId());
+            System.out.println("Saved Order: " + savedOrder);
 
-                try {
-                    String orderDetails = buildOrderDetailsString(savedOrder, cartItems);
-                    commonUtil.sendOrderConfirmationEmailAsync(
-                            user.getEmail(),
-                            user.getFullName(),
-                            orderDetails
-                    );
-                    WebInfo webInfo = webInfoConfig.getWebInfo(); // Hoặc lấy từ config
-                    if (webInfo != null && !webInfo.getEmail().isEmpty()) {
-                        commonUtil.sendNewOrderNotificationToAdmin(
-                                webInfo.getEmail(),
-                                user.getFullName(),
+            if (savedOrder.getPaymentMethod().equals("ONLINE")) {
+                String baseUrl = httpServletRequest.getScheme() + "://" + httpServletRequest.getServerName() + ":" + httpServletRequest.getServerPort();
+                String vnpayUrl = checkOutService.checkOutWithPayOnline(savedOrder, baseUrl);
+                System.out.println("VNPAY URL: " + vnpayUrl);
+                return "redirect:" + vnpayUrl;
+            } else {
+                if (!ObjectUtils.isEmpty(savedOrder)) {
+                    session.setAttribute("succMsg", "Đặt hàng thành công! Mã đơn hàng: " + savedOrder.getOrderId());
+                    cartService.clearCart(user.getUserId());
+
+                    try {
+                        String orderDetails = buildOrderDetailsString(savedOrder, cartItems);
+                        commonUtil.sendOrderConfirmationEmailAsync(
                                 user.getEmail(),
-                                savedOrder.getOrderId(),
-                                savedOrder.getTotalAmount(),
+                                user.getFullName(),
                                 orderDetails
                         );
+                        WebInfo webInfo = webInfoConfig.getWebInfo(); // Hoặc lấy từ config
+                        if (webInfo != null && !webInfo.getEmail().isEmpty()) {
+                            commonUtil.sendNewOrderNotificationToAdmin(
+                                    webInfo.getEmail(),
+                                    user.getFullName(),
+                                    user.getEmail(),
+                                    savedOrder.getOrderId(),
+                                    savedOrder.getTotalAmount(),
+                                    orderDetails
+                            );
+                        }
+
+                        sendNewOrderNotificationToAdmin(savedOrder, user);
+
+                        System.out.println("Email gửi thành công đến: " + user.getEmail());
+                    } catch (Exception emailException) {
+                        System.err.println("Lỗi gửi email: " + emailException.getMessage());
                     }
 
-                    sendNewOrderNotificationToAdmin(savedOrder, user);
-
-                    System.out.println("Email gửi thành công đến: " + user.getEmail());
-                } catch (Exception emailException) {
-                    System.err.println("Lỗi gửi email: " + emailException.getMessage());
+                    session.setAttribute("succMsg", "Đặt hàng thành công! Mã đơn hàng: " + savedOrder.getOrderId());
+                    return "redirect:/user/orders";
+                } else {
+                    session.setAttribute("errorMsg", "Không thể đặt hàng. Vui lòng thử lại sau.");
+                    return "redirect:/user/checkout";
                 }
-
-                session.setAttribute("succMsg", "Đặt hàng thành công! Mã đơn hàng: " + savedOrder.getOrderId());
-                return "redirect:/user/orders";
-            } else {
-                session.setAttribute("errorMsg", "Không thể đặt hàng. Vui lòng thử lại sau.");
-                return "redirect:/user/checkout";
             }
-
         } catch (Exception e) {
+            System.out.println("Error during order processing: " + e.getMessage());
             return "redirect:/user/checkout";
         }
     }
