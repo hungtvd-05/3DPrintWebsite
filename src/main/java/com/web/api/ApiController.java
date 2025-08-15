@@ -1,6 +1,7 @@
 package com.web.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.web.config.WebInfoConfig;
 import com.web.controller.AdminController;
 import com.web.model.*;
 import com.web.service.*;
@@ -70,6 +71,9 @@ public class ApiController {
 
     @Autowired
     private CartService cartService;
+
+    @Autowired
+    private WebInfoConfig webInfoConfig;
 
     @PostMapping("/addContact")
     public ResponseEntity<String> addContact(
@@ -242,8 +246,18 @@ public class ApiController {
         try {
             UserAccount user = getCurrentUser();
 
-            List<Notification> notifications = notificationService.getUserNotifications(user);
-            long unreadCount = notificationService.getUnreadCount(user);
+            List<Notification> notifications;
+            long unreadCount;
+
+            if (user.getRole().equals("ROLE_ADMIN")) {
+                notifications = notificationService.getUserNotifications(webInfoConfig.getAdminAccount());
+                unreadCount = notificationService.getUnreadCount(webInfoConfig.getAdminAccount());
+            } else {
+                notifications = notificationService.getUserNotifications(user);
+                unreadCount = notificationService.getUnreadCount(user);
+            }
+
+
 
             List<Map<String, Object>> notificationList = notifications.stream()
                     .map(n -> {
@@ -292,12 +306,12 @@ public class ApiController {
     @ResponseBody
     public ResponseEntity<String> markAllNotificationsAsRead(HttpServletRequest request) {
         try {
-            System.out.println("Marking all notifications as read");
-
             UserAccount user = getCurrentUser();
-
-            System.out.println(user);
-            notificationService.markAllAsRead(user);
+            if (user.getRole().equals("ROLE_ADMIN")) {
+                notificationService.markAllAsRead(webInfoConfig.getAdminAccount());
+            } else {
+                notificationService.markAllAsRead(user);
+            }
             return ResponseEntity.ok("All marked as read");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error marking all as read");
@@ -607,7 +621,7 @@ public class ApiController {
 
             if (!ObjectUtils.isEmpty(savedProduct)) {
 
-                if (!product.getCreatedBy().getRole().equals("ROLE_ADMIN")) {
+                if (!product.getCreatedBy().getRole().equals("ROLE_ADMIN") && webInfoConfig.getWebInfo().getReceiveAcceptNo()) {
                     sendProductNotificationToAdmins(savedProduct);
                 }
 

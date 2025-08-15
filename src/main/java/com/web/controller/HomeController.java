@@ -559,23 +559,21 @@ public class HomeController {
                     System.currentTimeMillis());
             notification.put("notificationKey", notificationKey);
 
-            List<UserAccount> admins = webInfoConfig.getAdminAccounts();
+            UserAccount admin = webInfoConfig.getAdminAccount();
 
-            for (UserAccount admin : admins) {
-                Notification dbNotification = new Notification();
-                dbNotification.setUser(admin);
-                dbNotification.setType("new_order");
-                dbNotification.setContent(content);
-                dbNotification.setContentId(order.getOrderId());
-                dbNotification.setSenderId(customer.getUserId());
-                dbNotification.setSenderName(customer.getFullName());
-                dbNotification.setSenderAvatar(customer.getProfileImage());
-                dbNotification.setNotificationKey(notificationKey + "_" + admin.getUserId());
-                dbNotification.setIsRead(false);
-                dbNotification.setCreatedAt(LocalDateTime.now());
+            Notification dbNotification = new Notification();
+            dbNotification.setUser(admin);
+            dbNotification.setType("new_order");
+            dbNotification.setContent(content);
+            dbNotification.setContentId(order.getOrderId());
+            dbNotification.setSenderId(customer.getUserId());
+            dbNotification.setSenderName(customer.getFullName());
+            dbNotification.setSenderAvatar(customer.getProfileImage());
+            dbNotification.setNotificationKey(notificationKey + "_" + admin.getUserId());
+            dbNotification.setIsRead(false);
+            dbNotification.setCreatedAt(LocalDateTime.now());
 
-                notificationService.save(dbNotification);
-            }
+            notificationService.save(dbNotification);
 
             // Gửi đến admin qua WebSocket
             messagingTemplate.convertAndSend("/topic/admin/notifications", notification);

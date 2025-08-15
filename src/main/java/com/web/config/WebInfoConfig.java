@@ -24,7 +24,7 @@ public class WebInfoConfig {
 
     private WebInfo cachedWebInfo;
 
-    private List<UserAccount> cachedAdminAccounts;
+    private UserAccount cachedAdminAccount;
 
     @PostConstruct
     public void initWebInfo() {
@@ -39,15 +39,15 @@ public class WebInfoConfig {
             this.cachedWebInfo = (webInfo != null) ? webInfo : new WebInfo();
             System.out.println(webInfo.getEmail());
             System.out.println("✅ WebInfo cache refreshed");
-            this.cachedAdminAccounts = userService.getAllAdminAccount();
+            this.cachedAdminAccount = userService.getAdminAccount();
             System.out.println("✅ User accounts cache refreshed");
         } catch (Exception e) {
             System.err.println("❌ Error refreshing WebInfo cache: " + e.getMessage());
             if (this.cachedWebInfo == null) {
                 this.cachedWebInfo = new WebInfo();
             }
-            if (this.cachedAdminAccounts == null) {
-                this.cachedAdminAccounts = null;
+            if (this.cachedAdminAccount == null) {
+                this.cachedAdminAccount = null;
             }
         }
     }
@@ -56,8 +56,8 @@ public class WebInfoConfig {
         return this.cachedWebInfo != null ? this.cachedWebInfo : new WebInfo();
     }
 
-    public List<UserAccount> getAdminAccounts() {
-        return this.cachedAdminAccounts != null ? this.cachedAdminAccounts : List.of();
+    public UserAccount getAdminAccount() {
+        return this.cachedAdminAccount != null ? this.cachedAdminAccount : new UserAccount();
     }
 
     // Method để force refresh cache khi cần

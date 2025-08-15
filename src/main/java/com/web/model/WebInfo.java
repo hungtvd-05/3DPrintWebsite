@@ -38,6 +38,12 @@ public class WebInfo {
 
     private String linkToOrder = "";
 
+    @Column(nullable = false)
+    private Boolean autoAcceptProduct = false;
+
+    @Column(nullable = false)
+    private Boolean receiveAcceptNo = false;
+
     @ElementCollection
     @CollectionTable(name = "web_info_attributes",
             joinColumns = @JoinColumn(name = "web_info_id"))

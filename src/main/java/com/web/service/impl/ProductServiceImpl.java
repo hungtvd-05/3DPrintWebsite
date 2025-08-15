@@ -1,5 +1,6 @@
 package com.web.service.impl;
 
+import com.web.config.WebInfoConfig;
 import com.web.model.*;
 import com.web.repository.*;
 import com.web.service.CommentService;
@@ -39,6 +40,9 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     private UserAccountRepository userAccountRepository;
 
+    @Autowired
+    private WebInfoConfig webInfoConfig;
+
     @Override
     @Transactional
     public Product saveProduct(Product product) {
@@ -77,7 +81,7 @@ public class ProductServiceImpl implements ProductService {
 
         product.setCreatedBy(currentUser);
 
-        if (currentUser.getRole().equals("ROLE_ADMIN")) {
+        if (currentUser.getRole().equals("ROLE_ADMIN") || webInfoConfig.getWebInfo().getAutoAcceptProduct()) {
             product.setConfirmed(1);
         }
 

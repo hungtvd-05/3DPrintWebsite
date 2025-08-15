@@ -54,6 +54,17 @@ public class WebInfoServiceImpl implements WebInfoService {
     }
 
     @Override
+    public WebInfo updateWebInfoAccept(WebInfo webInfo) {
+        WebInfo newWebInfo = webInfoRepository.findFirstByOrderByIdAsc();
+        if (newWebInfo != null) {
+            newWebInfo.setAutoAcceptProduct(webInfo.getAutoAcceptProduct());
+            newWebInfo.setReceiveAcceptNo(webInfo.getReceiveAcceptNo());
+            return webInfoRepository.save(newWebInfo);
+        }
+        return null;
+    }
+
+    @Override
     @Transactional
     public WebInfo getWebInfo() {
         WebInfo webInfo = webInfoRepository.findFirstByOrderByIdAsc();

@@ -200,15 +200,15 @@ public class UserController {
 
     @PostMapping("/update-profile-2")
     public String updateProfileNext(@RequestParam Long id,
-                                @RequestParam(value = "aboutMe", defaultValue = "") String aboutMe,
-                                @RequestParam(value = "detailAddress", defaultValue = "") String detailAddress,
-                                @RequestParam(value = "provinceCode", defaultValue = "") String provinceCode,
-                                @RequestParam(value = "province", defaultValue = "") String province,
-                                @RequestParam(value = "wardCode", defaultValue = "") String wardCode,
-                                @RequestParam(value = "ward", defaultValue = "") String ward,
-                                @RequestParam(value = "wardFullName", defaultValue = "") String wardFullName,
-                                Principal p,
-                                HttpSession session) throws IOException {
+                                    @RequestParam(value = "aboutMe", defaultValue = "") String aboutMe,
+                                    @RequestParam(value = "detailAddress", defaultValue = "") String detailAddress,
+                                    @RequestParam(value = "provinceCode", defaultValue = "") String provinceCode,
+                                    @RequestParam(value = "province", defaultValue = "") String province,
+                                    @RequestParam(value = "wardCode", defaultValue = "") String wardCode,
+                                    @RequestParam(value = "ward", defaultValue = "") String ward,
+                                    @RequestParam(value = "wardFullName", defaultValue = "") String wardFullName,
+                                    Principal p,
+                                    HttpSession session) throws IOException {
 
 
         UserAccount user = userService.getUserAccountByEmail(p.getName());
@@ -274,10 +274,10 @@ public class UserController {
 
     @GetMapping("/favorites")
     public String viewFavorites(Model m,
-                                    @RequestParam(name = "page", defaultValue = "1") Integer pageNumber,
-                                    @RequestParam(value = "sorted", defaultValue = "") String sorted,
-                                    @RequestParam(value = "search", defaultValue = "") String search,
-                                    @RequestParam(name = "pageSize", defaultValue = "24") Integer pageSize) {
+                                @RequestParam(name = "page", defaultValue = "1") Integer pageNumber,
+                                @RequestParam(value = "sorted", defaultValue = "") String sorted,
+                                @RequestParam(value = "search", defaultValue = "") String search,
+                                @RequestParam(name = "pageSize", defaultValue = "24") Integer pageSize) {
 
         UserAccount user = userService.getCurrentUserAccount();
 
@@ -641,23 +641,21 @@ public class UserController {
                     System.currentTimeMillis());
             notification.put("notificationKey", notificationKey);
 
-            List<UserAccount> admins = webInfoConfig.getAdminAccounts();
+            UserAccount admin = webInfoConfig.getAdminAccount();
 
-            for (UserAccount admin : admins) {
-                Notification dbNotification = new Notification();
-                dbNotification.setUser(admin);
-                dbNotification.setType("new_order");
-                dbNotification.setContent(content);
-                dbNotification.setContentId(order.getOrderId());
-                dbNotification.setSenderId(customer.getUserId());
-                dbNotification.setSenderName(customer.getFullName());
-                dbNotification.setSenderAvatar(customer.getProfileImage());
-                dbNotification.setNotificationKey(notificationKey + "_" + admin.getUserId());
-                dbNotification.setIsRead(false);
-                dbNotification.setCreatedAt(LocalDateTime.now());
+            Notification dbNotification = new Notification();
+            dbNotification.setUser(admin);
+            dbNotification.setType("new_order");
+            dbNotification.setContent(content);
+            dbNotification.setContentId(order.getOrderId());
+            dbNotification.setSenderId(customer.getUserId());
+            dbNotification.setSenderName(customer.getFullName());
+            dbNotification.setSenderAvatar(customer.getProfileImage());
+            dbNotification.setNotificationKey(notificationKey + "_" + admin.getUserId());
+            dbNotification.setIsRead(false);
+            dbNotification.setCreatedAt(LocalDateTime.now());
 
-                notificationService.save(dbNotification);
-            }
+            notificationService.save(dbNotification);
 
             // Gửi đến admin qua WebSocket
             messagingTemplate.convertAndSend("/topic/admin/notifications", notification);

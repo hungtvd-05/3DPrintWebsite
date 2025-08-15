@@ -106,6 +106,18 @@ public class AdminController {
         return "redirect:/admin/settings";
     }
 
+    @PostMapping("/update-webcomponents-accept")
+    public String updateWebComponentsAccept(@ModelAttribute WebInfo webInfo, HttpSession session) throws IOException {
+
+        if (!ObjectUtils.isEmpty(webInfoService.updateWebInfoAccept(webInfo))) {
+            webInfoConfig.refreshWebInfo();
+            session.setAttribute("succMsg", "Đã cập nhật thông tin website của bạn!");
+        } else {
+            session.setAttribute("errorMsg", "Lỗi cập nhật!");
+        }
+        return "redirect:/admin/settings";
+    }
+
     @GetMapping("/add-product")
     public String loadAddProduct(Model m) {
         List<TagDTO> tags = productService.getAllTags();

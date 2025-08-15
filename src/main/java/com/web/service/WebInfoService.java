@@ -7,6 +7,7 @@ import java.io.IOException;
 
 public interface WebInfoService {
     WebInfo updateWebInfo(WebInfo webInfo, MultipartFile file) throws IOException;
+    WebInfo updateWebInfoAccept(WebInfo webInfo);
     WebInfo getWebInfo();
     void addContactInfo(String name, String url);
     void deleteContactInfo(String key);
